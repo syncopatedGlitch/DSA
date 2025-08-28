@@ -48,6 +48,8 @@ def binary_search_insertion_pos(arr, key, end):
 
 
 def insertion_sort(inp_list: list) -> list:
+    # range starts from 1 because 0th position (single) element
+    # is already sorted by defintion
     for i in range(1, len(inp_list)):
         key = inp_list[i]
 
