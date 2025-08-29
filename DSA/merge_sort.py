@@ -63,11 +63,27 @@ def merge_sort_recursion(inp_arr: list, left=0, right=None) -> list:
 def merge_sort_iterative(arr: list):
     """
     Iterative merge sort using bottom-up approach - builds sorted subarrays from smallest to largest.
+    ### The Systematic Growth Pattern
 
-    CONCEPT:
-    Instead of recursively dividing the array, this approach starts with the smallest possible
-    sorted subarrays (size 1) and progressively merges them into larger sorted subarrays.
-    Each iteration doubles the subarray size until the entire array is sorted.
+    The key insight is that you can control the growth systematically by doubling the size of what you're
+    working with at each level:
+
+    Level 1: Work with chunks of size 1 (individual elements)
+    • Every single element is already a "sorted array"
+    • Merge adjacent pairs: element 0 with element 1, element 2 with element 3, etc.
+    • Result: You now have sorted chunks of size 2
+
+    Level 2: Work with chunks of size 2
+    • Take the sorted pairs from Level 1
+    • Merge adjacent pairs of these 2-element sorted chunks
+    • Result: You now have sorted chunks of size 4
+
+    Level 3: Work with chunks of size 4
+    • Take the sorted 4-element chunks from Level 2
+    • Merge adjacent pairs of these chunks
+    • Result: You now have sorted chunks of size 8
+
+    Continue this pattern until your chunk size equals or exceeds the array length.
 
     ALGORITHM FLOW:
     1. Start with subarray size = 1 (every single element is "sorted")
