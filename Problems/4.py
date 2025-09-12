@@ -52,9 +52,8 @@ def max_profit(arr) -> int:
         print(f"selling at {sell}")
         print(f"profit is {sell - buy}")
         if sell - buy > 0:
-            profit += (sell - buy)
+            profit += sell - buy
             buy = sell
-            print(f"profit for buy at {buy} and sell at {sell} is {profit}")
         elif item < buy:
             buy = item
             print(f"Buying at {buy}")
