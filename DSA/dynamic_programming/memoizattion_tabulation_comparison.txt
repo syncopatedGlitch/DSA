@@ -1,0 +1,21 @@
+So, which one should you use? Here’s a quick comparison:
+
+
+  ┌────────────────┬──────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────┐
+  │ Feature        │ Memoization (Top-Down)                                       │ Tabulation (Bottom-Up)                                       │
+  ├────────────────┼──────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+  │ Approach       │ Recursive                                                    │ Iterative                                                    │
+  │ Execution      │ Starts from the main problem and breaks it down.             │ Starts from the smallest subproblems and builds up.          │
+  │ Subproblems    │ Solves only the subproblems that are actually needed.        │ Solves every subproblem from the beginning up to the target. │
+  │ Performance    │ Can be slower due to recursion overhead.                     │ Generally faster as iteration is cheaper than recursion.     │
+  │ Stack Overflow │ Prone to stack overflow errors on very large inputs.         │ Not susceptible to stack overflow.                           │
+  │ Readability    │ Often more intuitive and closer to the problem's definition. │ Can sometimes be harder to set up the iteration logic.       │
+  └────────────────┴──────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+
+  When to use which?
+
+   * Start with Memoization: If you can come up with a plain recursive solution, memoizing it is often the easiest and most intuitive next step. It's a great way to
+     get a correct DP solution quickly.
+   * Use Tabulation for Optimization: Tabulation is often preferred in interviews for its performance benefits (no recursion overhead). More importantly, the
+     tabulation approach can often be space-optimized. For our Fibonacci example, notice that to calculate table[i], you only need table[i-1] and table[i-2]. You
+     don't need the whole table. You could solve it with just two variables, reducing the space complexity from O(n) to O(1).

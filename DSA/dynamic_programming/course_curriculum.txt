@@ -1,0 +1,37 @@
+Dynamic Programming for Interviews: A Step-by-Step Guide
+
+   1. Core Principles of Dynamic Programming
+       * Optimal Substructure: The optimal solution to a problem can be constructed
+         from the optimal solutions of its subproblems.
+       * Overlapping Subproblems: A recursive algorithm solves the same subproblems
+         over and over again.
+
+   2. The Two Faces of DP: Memoization vs. Tabulation
+       * Memoization (Top-Down): Solving the problem recursively, but caching the
+         results of subproblems. It's often more intuitive to write.
+       * Tabulation (Bottom-Up): Solving the problem iteratively, starting from the
+         smallest subproblems and building up to the final solution. This can be more
+         efficient in terms of space and speed.
+
+   3. Classic 1D DP Problems (The Foundation)
+       * Fibonacci Sequence
+       * Climbing Stairs
+       * House Robber
+
+   4. Classic 2D DP Problems (Grid & Sequence Problems)
+       * Unique Paths in a Grid
+       * Longest Common Subsequence
+       * Edit Distance
+
+   5. Knapsack Problems (A Common Interview Pattern)
+       * 0/1 Knapsack: Given a set of items with weights and values, determine the
+         most value you can carry in a knapsack of a fixed capacity.
+       * Unbounded Knapsack: Same as 0/1, but you have an unlimited supply of each item.
+
+   6. Putting it all together: A Framework for Solving DP Problems
+       * How to identify a DP problem.
+       * Defining the state.
+       * Finding the recurrence relation.
+       * Identifying the base cases.
+       * Choosing between memoization and tabulation.
+       * Code implementation.
