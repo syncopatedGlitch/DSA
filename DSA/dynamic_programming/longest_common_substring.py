@@ -89,7 +89,6 @@ optimal solution from previously computed optimal solutions.
 def lcs_length(text1: str, text2: str) -> int:
     '''
     Calculates the length of the longest common subsequence of two strings.
-    pass
     '''
     # initialize the base row with all zeros
     # len(text1) + 1 because we need an extra row for the base case
