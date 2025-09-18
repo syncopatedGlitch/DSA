@@ -1,0 +1,57 @@
+A 6-Step Framework for Solving DP Problems
+
+Step 1: Is it a Dynamic Programming problem?
+
+First, identify the signs. Look for keywords like:
+* "Find the maximum/minimum..."
+* "Find the number of ways..."
+* "Find if it's possible to reach a target..."
+
+Then, confirm it has the two core properties:
+1. Optimal Substructure: Can you build the optimal solution to the main problem from the optimal solutions of its subproblems?
+2. Overlapping Subproblems: Would a naive recursive solution solve the exact same subproblem multiple times?
+
+If yes to both, it's a DP problem.
+
+Step 2: Define the State
+
+This is the most critical step. You need to define what information you need to store to represent the solution to a subproblem.
+* Ask yourself: "What parameters change as I solve smaller versions of the problem?"
+* For 1D DP (like House Robber), the only thing that changes is the number of houses. So the state is dp[i]: "the max value robbing up to house i".
+* For 2D DP (like LCS), two things change: the length of text1 and the length of text2. So the state is dp[i][j]: "the LCS of text1's first i chars and text2's
+    first j chars".
+* For Knapsack, it's the number of items and the capacity. So the state is dp[i][c]: "max value using first i items with capacity c".
+
+Step 3: Find the Recurrence Relation
+
+This is the formula that connects the solution of a bigger problem to its subproblems.
+* Think about the last step or the last choice you can make.
+* For dp[i], what choices do you have at step i?
+    * House Robber: At house i, you can either rob it or not. This leads to the max(value[i] + dp[i-2], dp[i-1]) recurrence.
+* For dp[i][j], what choices do you have at i and j?
+    * LCS: The characters either match or they don't. This leads to the 1 + dp[i-1][j-1] or max(dp[i-1][j], dp[i][j-1]) recurrence.
+
+Step 4: Identify the Base Cases
+
+What is the answer for the smallest possible subproblem where you don't need to do any work?
+* dp[0], dp[1], dp[0][0], etc.
+* LCS of a string with an empty string is 0.
+* Ways to climb 0 stairs is 1 (you're already there).
+* Max knapsack value with 0 capacity is 0.
+
+Step 5: Implement (Top-Down or Bottom-Up)
+
+* Top-Down (Memoization): Write the recursive function from your recurrence relation. Add a cache (array or hash map) to store results. It's often more intuitive.
+* Bottom-Up (Tabulation): Create an array or 2D table. Set the base cases. Use loops to fill the table from the bottom up. This is usually faster and what
+    interviewers often prefer.
+
+Step 6: Optimize Space
+
+Once you have a working Tabulation solution, look for optimizations.
+* If dp[i][j] only depends on the previous row (dp[i-1]), you can reduce space from O(N\*M) to O(M).
+* If dp[i] only depends on dp[i-1] and dp[i-2], you can reduce space from O(N) to O(1).
+
+---
+
+And that's the entire process. Every problem we've covered fits this framework. By practicing applying these steps, you'll be able to confidently tackle DP
+questions in your interviews.
