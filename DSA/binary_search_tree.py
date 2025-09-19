@@ -168,6 +168,7 @@ class BinarySearchTree:
         perform in order traversal to display a sorted list of values from a binary tree.
         Practical application: create a sorted list from a binary tree as
         an input for binary search algorithm.
+        In-order: Left -> Root -> Right
         '''
         result = []
 
@@ -198,6 +199,7 @@ class BinarySearchTree:
         1. Check current node (is it a large file?)
         2. If directory, recursively search each child
         3. Process results as we find them
+        Pre-order: Root -> Left -> Right
         '''
         result = []
 
@@ -237,6 +239,7 @@ class BinarySearchTree:
         4. Process Directory B → return 25KB (10KB + 15KB)
         5. Process File4.txt → return 20KB
         6. Process Directory A → return 50KB (5KB + 25KB + 20KB)
+        Post-order: Left -> Right -> Root
         '''
         result = []
 
@@ -485,6 +488,7 @@ class BinarySearchTree:
 
 
 def is_binary_search_tree(node):
+    # In-order: Left -> Root -> Right
     import math
     p_infinity = math.inf
     n_infinity = -math.inf

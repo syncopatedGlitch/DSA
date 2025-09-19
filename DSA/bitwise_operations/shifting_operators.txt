@@ -1,0 +1,56 @@
+Bit Shifting Operators
+
+  Bit shifting operators move the bits of an integer to the left or right. This is a very efficient way to perform multiplication and division by powers of two.
+
+  5. Left Shift (<<)
+
+  The left shift operator x << y shifts the bits of x to the left by y positions.
+
+   * How it works:
+       1. Each bit in the number is moved y places to the left.
+       2. The y most significant (leftmost) bits are discarded.
+       3. y zero bits are added to the least significant (rightmost) positions.
+
+   * Mathematical Equivalence: A left shift by y is equivalent to multiplying the number by 2<sup>y</sup>.
+
+   * Example: 13 << 2 (Multiply 13 by 2<sup>2</sup>, which is 4)
+       * 13 in binary is ...00001101
+       * Shifting left by 2 positions:
+           * The two leftmost bits (11) of the original number's significant part are shifted out.
+           * Two zeros are added on the right.
+       * ...00001101 becomes ...00110100
+       * Let's convert 110100 back to decimal:
+           * (1  32) + (1  16) + (0  8) + (1  4) + (0  2) + (0  1) = 32 + 16 + 4 = 52
+       * This is the same as 13 * 4 = 52.
+
+   * Python Code:
+   1     result = 13 << 2
+   2     print(result)  # Output: 52
+
+  6. Right Shift (>>)
+
+  The right shift operator x >> y shifts the bits of x to the right by y positions.
+
+   * How it works:
+       1. Each bit in the number is moved y places to the right.
+       2. The y least significant (rightmost) bits are discarded.
+       3. What fills the y empty positions on the left depends on the sign of the number. This is a crucial point.
+           * For positive numbers: Zeros are added on the left. This is called a logical right shift.
+           * For negative numbers: The sign bit (the leftmost bit) is copied. If the sign bit is 1, then 1s are added. This is called an arithmetic right shift, and
+             it preserves the number's negative sign. Python uses this method.
+
+   * Mathematical Equivalence: A right shift by y is equivalent to performing integer division of the number by 2<sup>y</sup>.
+
+   * Example: 13 >> 1 (Integer divide 13 by 2<sup>1</sup>, which is 2)
+       * 13 in binary is ...00001101
+       * Shifting right by 1 position:
+           * The rightmost bit (1) is discarded.
+           * A zero is added on the left.
+       * ...00001101 becomes ...00000110
+       * Let's convert 110 back to decimal:
+           * (1  4) + (1  2) + (0 * 1) = 4 + 2 = 6
+       * This is the same as 13 // 2 = 6 (integer division).
+
+   * Python Code:
+   1     result = 13 >> 1
+   2     print(result)  # Output: 6

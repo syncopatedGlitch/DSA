@@ -1,0 +1,19 @@
+Phase 1: The Fundamentals (Today)
+
+[ ] Introduction to Binary Representation
+[ ] Core Bitwise Operators: AND, OR, XOR, NOT
+[ ] Bit Shifting Operators: Left Shift, Right Shift
+[ ] Practical Use Cases & "Tricks"
+
+Phase 2: Interview Problems & Techniques
+
+[ ] Counting Set Bits (Hamming Weight)
+[ ] Finding the Single Non-Repeating Element
+[ ] Power of Two
+[ ] Swapping Numbers
+[ ] Subset Generation
+
+Phase 3: Advanced Concepts
+
+[ ] Two's Complement
+[ ] Real-world Applications
