@@ -1,0 +1,464 @@
+Module 3: The Interview Gauntlet: Case Studies
+
+  I will give you a broad design prompt, and you will walk me through your design process, just as you would in a real interview.
+
+  Remember the 4-Step Communication Framework we outlined in the plan:
+   1. Clarify & Scope: Ask questions to define functional and non-functional requirements.
+   2. High-Level Design: Sketch the main components and data flow.
+   3. Deep Dive: Zoom into specific components, justifying your choices.
+   4. Bottlenecks & Scale: Discuss trade-offs and future-proofing.
+
+  Let's begin with a classic warm-up problem.
+
+  Your prompt is: "Design a URL shortener like TinyURL."
+
+  Let's start with step one. What clarifying questions would you ask me to properly define the scope and requirements of the system?
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > my questions would be: 1. what should be the max length of the short url? 2. what size of user base are we looking at? 3. would it be read or write heavy? 4.  │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Excellent questions. This is exactly the right way to begin. You're defining the functional and non-functional requirements before drawing a single box.
+
+  Let's establish the scope with these answers.
+
+   1. URL Length: Let's constrain the short URL to be a fixed length of 7 characters. The characters can be alphanumeric: [a-z, A-Z, 0-9], which gives us 62 possible
+      characters.
+
+   2. Scale/Traffic: Let's design for a significant scale. Assume we will be generating 100 million new URLs per month.
+
+   3. Read vs. Write Ratio: You've asked the most important question. This system will be extremely read-heavy. A reasonable assumption is a 100:1 read-to-write
+      ratio. For every URL shortened, it will be redirected (read) 100 times on average.
+
+  You had a "4." started—any other core requirements you'd want to define? For example, you might ask about:
+   * Do short URLs need to expire?
+   * Do we need to support custom, user-defined short URLs?
+   * Do we need to track analytics (like click counts)?
+
+  For this first pass, let's keep it simple. Let's assume the following:
+   * Core Functionality: A user provides a long URL, and the service returns a unique, 7-character short URL. When a user accesses the short URL, they are redirected
+     to the original long URL.
+   * No custom URLs.
+   * No expiration.
+   * No analytics tracking.
+
+  ---
+
+  Given these requirements, you have a good foundation. You know the length of the key, the write volume, and the read-heavy nature of the traffic.
+
+  Let's move to the next step.
+
+  How would you approach the high-level design? What are the main components of this system and how do they interact?
+
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > I will have a LB fronting 4 independent nodes of api servers that talk to a centralized sql db like postgres for writes and 2 read replicas for reads.       │
+│    Application server would host the code to convert the long url into short url and store that in the write replica, and also the logic to redirect to read    │
+│    replicas for any read queries. The DNS server would resolve the requests sent to my user friendly domain name to the LB which will then distribute load to   │
+│    the app servers based on the least traffic rule, i.e the web serves that have the least number of connections open would get the request                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ This is a great start. You've laid out a classic, scalable web service architecture with a load balancer, a stateless application tier, and a primary-replica
+  database setup. That's a solid foundation.
+
+  Your traffic flow is logical:
+  DNS -> Load Balancer -> App Servers -> Database
+
+  And your choice of "least connections" for the load balancer is well-suited for this.
+
+  Just to clarify a point of terminology, the application would write to the Primary (or Master) database, and the changes would then propagate to the read
+  replicas. But the intent of your design is clear and correct.
+
+  Now, let's zoom in on the most critical piece of this entire system. You said the application server would host "the code to convert the long url into short
+  url."
+
+  This conversion logic is the heart of the entire design.
+
+  Let's deep-dive into that. How, specifically, would you generate a unique 7-character string for each long URL?
+
+  Let me propose two common initial ideas to get us started. What is the critical problem with each of these approaches?
+
+   1. Hashing: What if we just hash the long URL (e.g., using MD5) and take the first 7 characters?
+   2. Random Generation: What if we just generate a random 7-character string and check if it's already been used in the database?
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > i would use hashing with an explicit db check since first seven bits of a hash might collide and we do not want that to happen at all otherwise it will lead to  │
+│    db write failures if the primary key in the table where we store long to short url is a primary key, or it might result in duplicate mappings if short url is    │
+│    not a primary key                                                                                                                                                │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ You've hit on the exact right problem. Collisions are the fatal flaw of a simple hashing approach. And you're also right that adding a database check would solve
+  the uniqueness problem.
+
+  However, let's analyze the performance of that "hash and check" approach at the scale we discussed (100 million writes/month).
+
+  Our system needs to be extremely fast. Your proposed method looks like this:
+   1. Generate hash.
+   2. Take first 7 characters.
+   3. Query the database to see if that short URL exists.
+   4. If it exists (a collision), maybe try again with a different hash or a random string.
+   5. If it doesn't exist, write to the database.
+
+  This "read-before-write" pattern is inefficient. As our database grows to billions of URLs, the probability of collisions increases. You might have to perform
+  several database reads just to complete a single write operation. For a write-heavy service, this would be a major bottleneck.
+
+  So, let's refine the goal. We need a method that can generate a short URL that is guaranteed to be unique on the first try, without needing to check the database
+  beforehand.
+
+  Let's think about what a database can give us that is always unique.
+
+  Imagine we have a table urls with a standard auto-incrementing 64-bit integer ID as its primary key.
+   * The first URL inserted gets ID = 1.
+   * The second gets ID = 2.
+   * The billionth URL gets ID = 1,000,000,000.
+
+  Each of these IDs is guaranteed to be unique. Now we have a unique number for every URL.
+
+  The new question is: How can we convert a number like 1 or 1,000,000,000 into our 7-character alphanumeric string? What kind of encoding or mathematical
+  conversion could we use?
+
+╭─────────────────────────────────────────────────────────╮
+│  > we can use the ASCII representation of the numbers?  │
+╰─────────────────────────────────────────────────────────╯
+
+✦ That's an interesting thought, but ASCII representation isn't quite right for this task. ASCII is a way to map a number to a single character (e.g., 65 -> 'A').
+  What we need is a way to represent a very large number (like our unique ID) as a sequence of characters from our specific alphabet.
+
+  Let's use an analogy.
+
+  In everyday life, we use the base-10 (decimal) system. We have 10 characters (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) to represent any number.
+
+  In computer science, we often use base-16 (hexadecimal). We have 16 characters (0-9 and a-f). For example, the number 255 in base-10 is represented as FF in
+  base-16.
+
+  We are doing the exact same thing here. We have a unique ID (a base-10 number) and we want to represent it in a different base.
+
+  Our character set is [a-z, A-Z, 0-9]. How many characters is that? 62.
+
+  So, the solution is to perform a base conversion. We will convert the base-10 database ID into a base-62 number.
+
+  Here's the process:
+
+   1. A user submits a long URL.
+   2. We insert it into our urls table. The database returns a unique, auto-incrementing ID, for example, 987654321.
+   3. We take this base-10 number (987654321) and run it through a base-62 conversion function.
+   4. This function will map that number to a unique 7-character string like pQbXyZ1.
+   5. We return this short string to the user.
+
+  Example:
+   * ID 1 -> b
+   * ID 61 -> 9
+   * ID 62 -> ba
+   * ID 63 -> bb
+
+  This method is perfect because:
+   * Uniqueness is guaranteed: Since every ID from the database is unique, its base-62 representation will also be unique.
+   * No "read-before-write": We never have to check the database to see if a short URL exists. We generate it directly from the ID. This is extremely fast and
+     efficient.
+   * Stateless: The conversion can be done by any of our application servers.
+
+  This base conversion approach is the standard, optimal solution for this problem.
+
+  ---
+
+  Excellent. Now that we have our core generation logic, let's define our database schema.
+
+  Question: What table or tables would you need, and what would the columns be?
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > before we move on, base62 will not always ensure the character length to be 7 chars. How do we ensure 7 chars are returned no matter the result of base62   │
+│    conversion?                                                                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ An outstanding question. You've caught the next critical detail. You are absolutely right; a simple base62 conversion of an incrementing ID will produce
+  variable-length strings (b, bb, dnh, etc.), not the fixed 7-character length we require.
+
+  This is a problem. We need a consistent format, and we also don't want to start with short, guessable URLs like b.
+
+  There are two common solutions to this.
+
+  Solution 1: Padding
+
+  The simplest solution is to pad the result. If the base62 string is shorter than 7 characters, you can prepend a character (e.g., the first character of your
+  alphabet, 'a') until it reaches the 7-character length.
+
+   * ID 63 -> bb -> Padded result: aaaaabb
+   * ID 12345 -> dnh -> Padded result: aaaadnh
+
+  This works and is simple to implement. The main downside is that your early URLs will all start with a long sequence of the same character, which isn't as
+  aesthetically clean.
+
+  Solution 2: Using an Offset (The Production-Grade Method)
+
+  A more elegant solution is to start your numbering from a higher value. We can calculate the first number that would produce a 7-character string in base-62.
+
+   * A 1-character string can represent 62^1 (62) values.
+   * A 6-character string can represent 62^6 (approx. 56.8 billion) values.
+   * Therefore, the very first number that requires 7 characters is 62^6. Let's call this our OFFSET.
+
+  The new logic becomes:
+   1. Get the auto-incrementing ID from the database (e.g., ID = 1).
+   2. Calculate the number to be encoded: effective_id = ID + OFFSET.
+   3. Perform the base-62 conversion on the effective_id.
+
+  Example:
+   * For our very first URL (ID = 1), we encode 1 + 62^6. This will result in a 7-character string (specifically, the base-62 equivalent of 1000001).
+   * For the second URL (ID = 2), we encode 2 + 62^6.
+
+  This ensures that every single generated URL is 7 characters long from day one. When we need to decode, we simply reverse the process: get the base-10 value from
+  the short URL and then subtract the OFFSET to get the original database ID.
+
+  This was an excellent clarification. For a production system, the offset method is generally preferred.
+
+  ---
+
+  Let's proceed with the assumption that we have a function that takes an ID and returns our unique, 7-character string.
+
+  Now, back to the database. What would the schema for our table(s) look like? What columns would you need?
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > i will have a single table with following fields - id (int), long url (varchar), created date (datetime), ValidUpto (datetime). ValidUpto can be initially   │
+│    left blank or al arbitrarily large date but we can update the logic anytime to update values here to expire the short url's                                  │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ This is a solid schema. It captures all the necessary information, and it's exactly what's needed to make the system work.
+
+  I particularly like that you've included ValidUpto. It shows you're thinking ahead about future requirements like expiring links, even though we scoped it out
+  for this initial design. It's much easier to add a column at the beginning than to migrate a massive table later.
+
+  Now, let's trace the two main user flows with this schema.
+
+  Write Path (Creating a URL):
+   1. Insert the long_url into this table.
+   2. The database returns the auto-generated id.
+   3. Your application base-62 encodes the id to get the short URL string.
+   4. Return the short URL to the user.
+  This works perfectly.
+
+  Read Path (Redirecting a URL):
+  Let's say a request comes in for http://tiny.url/Aa3. Your application receives the path Aa3.
+
+  With your proposed schema, what are the exact steps your application must take to find the corresponding long_url?
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > it must convert the short path to base 10 integer and then lookup the database against the id field to get the long url to redirect to  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Exactly. That process works, and it's perfectly valid:
+  Short URL -> Decode to ID -> SELECT ... WHERE id = ?
+
+  But think about our requirement: a 100:1 read-to-write ratio. Our system will be performing that base-62 decoding calculation on every single read. At a scale of
+  billions of requests, that's a lot of repeated computation.
+
+  What if we could eliminate that calculation from our critical read path entirely? What if we traded a tiny bit of storage space for a much faster read?
+
+  Consider this alternative schema:
+
+
+  ┌─────────────┬────────────┬──────────────────────────────────────────┐
+  │ Column Name │ Data Type  │ Notes                                    │
+  ├─────────────┼────────────┼──────────────────────────────────────────┤
+  │ id          │ BIGINT     │ Primary Key, Auto-incrementing           │
+  │ short_url_key │ VARCHAR(7) │ The 7-character string (e.g., "Aa3")     │
+  │ long_url    │ TEXT       │ The original URL, which can be very long │
+  │ created_at  │ DATETIME   │ Timestamp of creation                    │
+  └─────────────┴────────────┴──────────────────────────────────────────┘
+
+
+  The New Read Path:
+  A request comes in for http://tiny.url/Aa3.
+   1. The application takes the key Aa3.
+   2. It executes a single query: SELECT long_url FROM urls WHERE short_url_key = 'Aa3'.
+
+  The New Write Path:
+   1. Insert the long_url into the table, getting the id back.
+   2. Base-62 encode the id to create the short_url_key.
+   3. Execute an UPDATE to add the short_url_key to the row you just created.
+
+  By adding one column, we've made our read path significantly simpler and faster. It's now just a direct lookup on a string. For a system with a 100:1 read-heavy
+  load, this is an excellent trade-off.
+
+  This brings us to a critical point for performance.
+
+  Question: To make this new read path fast, which column(s) would you absolutely need to create a database index on, and why?
+
+╭─────────────────────────────────────────────────────────────────────────────────────╮
+│  > i would create an index on short_url_key as that is what we will be reading by.  │
+╰─────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Precisely. That is the single most important optimization for this entire system.
+
+  Your id column is already indexed because it's the Primary Key. By adding a database index to the `short_url_key` column, you give the database a sorted,
+  fast-lookup structure.
+
+   * Without the index: When you run SELECT ... WHERE short_url_key = 'Aa3', the database would have to perform a "full table scan," reading every single row in your
+     table to find the match. This would be incredibly slow with billions of rows.
+   * With the index: The database can find the exact location of the row almost instantly, in logarithmic time (O(log n)).
+
+  Given that our system is 99% reads, this index is what makes the entire design viable at scale.
+
+  ---
+
+  Excellent. You have now successfully designed a complete, scalable, and optimized URL shortener. We've covered the core generation logic, the data model, the
+  database schema, and the critical performance optimizations. This concludes our first case study.
+
+  Now we enter the final module of our curriculum, which focuses on the interview performance itself.
+
+  Module 4: Mastering the Performance
+
+  Knowing the technical details is half the battle. The other half is communicating your thought process effectively and demonstrating a senior-level ability to
+  think about scale and trade-offs.
+
+  The first skill we'll practice is Back-of-the-Envelope Calculation. This is about making quick, rough estimates to ground your design in reality. The goal is to
+  be in the right ballpark, not to be perfectly precise.
+
+  Let's practice with the system we just designed.
+
+  Question: We decided our service would handle 100 million new URLs per month. Roughly how much storage space would we need to store just the long_url data for
+  one year?
+
+  Walk me through your thought process. You can make a reasonable assumption for the average length of a URL.
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > how With the index: The database can find the exact location of the row almost instantly, in logarithmic time (O(log n))? explain the indexing concept in   │
+│    more detail so i know whats happening under the hood in db                                                                                                  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ An excellent and important question. Saying "add an index" is easy, but understanding why it's fast is what separates a senior engineer from a junior one. Let's
+  dive into what a database index really is.
+
+  The Book Analogy
+
+  Imagine you have a 500-page textbook and you need to find every page that mentions "CAP Theorem".
+
+   * Without an Index (Full Table Scan): Your only option is to start at page 1 and read every single word on every single page until you reach page 500. This is
+     slow, tedious, and resource-intensive. This is what the database does when a column is not indexed; it's called a Full Table Scan.
+
+   * With an Index: Now, imagine the book has an index at the back. The index is a special, alphabetized list of keywords. You can quickly jump to the "C" section,
+     find "CAP Theorem," and the index will tell you it's mentioned on pages 87, 123, and 345. You can then jump directly to those pages, ignoring the other 497
+     pages.
+
+  A database index is exactly this: a separate, specialized data structure that allows the database to find data without reading the whole table.
+
+  The Data Structure: B-Tree
+
+  For most databases (like PostgreSQL, MySQL, etc.), the index is stored as a B-Tree. Here's how to think about it:
+
+   1. A Balanced Tree: It's a tree structure that the database keeps balanced. This means the path from the root of the tree to any leaf is always the same length.
+
+   2. The "Signpost" System:
+       * The top of the tree is the Root Node. Think of it as a signpost. It might say: "Keys starting with a-m go left. Keys starting with n-z go right."
+       * When you search for short_url_key = 'Aa3', the database looks at the root node. 'A' is in the a-m range, so it follows the "left" pointer to the next level
+         of the tree.
+       * That next node might have more specific ranges: "Keys Aa-Az go left. Keys Ba-Bz go right." Again, it follows the "left" pointer.
+       * This continues for a few levels. With each step, the database eliminates millions or billions of rows it doesn't need to look at.
+
+   3. The Leaf Nodes and the Pointer:
+       * Eventually, it reaches a Leaf Node. This node contains the indexed value ('Aa3') and, most importantly, a pointer (an address) that tells the database
+         exactly where the full row of data is located on the disk.
+       * The database uses this pointer to jump directly to the correct location on disk and retrieve the long_url.
+
+  Why is it O(log n)?
+
+  Because the B-Tree is always balanced and very "wide" (each node can have many pointers), it is also very "shallow". Even with billions of rows in your table, it
+  might only take 3-5 "jumps" or levels in the tree to find any given key.
+
+  This is the power of logarithmic complexity. As your data grows 1000x, the time it takes to find something might only grow by 1.5x. It scales incredibly well.
+
+  The Trade-Off: Indexes are not free. They take up disk space, and every time you INSERT or DELETE a row, the database must also update the index, which makes
+  write operations slightly slower. This is why we only index columns that we frequently use for lookups.
+
+  Does that explanation of what's happening "under the hood" make sense?
+
+
+╭───────────────────────╮
+│  > yes, lets move on  │
+╰───────────────────────╯
+
+✦ Great. It's a fundamental concept, and I'm glad we covered it.
+
+  Let's return to our back-of-the-envelope calculation. This is a very common exercise in system design interviews to gauge your ability to think about scale.
+
+  The prompt was:
+   * We handle 100 million new URLs per month.
+   * We need to estimate the storage required for just the long_url data over the course of one year.
+
+  To answer this, you first need to make a reasonable assumption.
+
+  What would you assume for the average length of a `long_url`?
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > its hard to assume as some url's are very long especially if there are query parameters in it. So I can think of long url;s to be 200 chars long on average.   │
+│    However, i have no clue how to go about calculating it, as i have no baseline knowledge to feed into it so please explain this process in detail if you can    │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ That's a perfectly fair point, and it's the most common feeling when first approaching these questions. The goal isn't to have secret knowledge, but to have a
+  simple framework to break the problem down. The numbers are less important than the process.
+
+  Your assumption of 200 characters is an excellent, reasonable starting point. Let's use that.
+
+  Here is a simple, step-by-step process you can use every time.
+
+  ---
+
+  Back-of-the-Envelope Calculation: A Framework
+
+  Step 1: Write Down Your Assumptions and Knowns
+
+   * Writes per month: 100 million
+   * Time period: 1 year (which is 12 months)
+   * Average size of one `long_url`: 200 characters. For simplicity, we can assume 1 character = 1 byte. So, 200 bytes.
+
+  Step 2: Calculate the Total Number of Items
+
+  This is the total number of rows we'll be adding to our table in a year.
+
+   * Total URLs = (Writes per month) * (12 months)
+   * Total URLs = 100,000,000 * 12 = 1,200,000,000
+   * In simpler terms, that's 1.2 billion URLs per year.
+
+  Step 3: Calculate the Total Size in Bytes
+
+  Now, we just multiply the total number of items by the size of each item.
+
+   * Total Storage = (Total URLs) * (Size per URL)
+   * Total Storage = 1.2 billion * 200 bytes
+   * Total Storage = 240 billion bytes.
+
+  Step 4: Convert to Human-Readable Units
+
+  This is the final step. You just need to know the basic storage prefixes. The key is that each one is roughly 1,000 times bigger than the last.
+
+   * 1 Kilobyte (KB) = ~1 thousand bytes
+   * 1 Megabyte (MB) = ~1 million bytes
+   * 1 Gigabyte (GB) = ~1 billion bytes
+   * 1 Terabyte (TB) = ~1 trillion bytes
+
+  Our result was 240 billion bytes. Looking at the list, 1 billion bytes is 1 GB.
+
+  Therefore, our estimated storage for one year is 240 GB.
+
+  ---
+
+  Summary of the Process
+
+  That's all there is to it. The process is always:
+   1. State your assumptions (e.g., 200 bytes/URL).
+   2. Calculate the total number of items over the time period (1.2 billion URLs/year).
+   3. Multiply to get the total size in the base unit (240 billion bytes).
+   4. Convert to a familiar, large unit (240 GB).
+
+  You've now successfully estimated the storage requirements. It's not an exact figure, but it tells us we're talking about hundreds of gigabytes, not terabytes or
+  petabytes. This is a crucial insight for capacity planning.
+
+  ---
+
+  This exercise concludes our curriculum.
+
+  We started with the fundamental building blocks (servers, databases, caches), assembled them into architectural patterns (microservices, sagas), applied them to
+  a practical case study (TinyURL), and finished with a key interview skill (back-of-the-envelope math).
+
+  You've done an excellent job of asking clarifying questions and thinking critically at every step. You have a solid framework for both designing systems and
+  communicating that design effectively. You are well-prepared to tackle these questions in a real interview.
+
+  Good luck with your preparation.

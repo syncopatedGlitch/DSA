@@ -1,0 +1,85 @@
+---
+
+  System Design Interview Preparation: A Curriculum
+
+  This curriculum is divided into four modules, moving from foundational knowledge to practical application.
+
+  ---
+
+  Module 1: The Fundamental Building Blocks
+
+  This module ensures we have a shared vocabulary and a deep understanding of the individual components that form any large-scale system. We will treat these as
+  the "Lego bricks" of system design.
+
+   * 1.1: Single-Server to Multi-Server:
+       * Clients, Servers, and Networks (DNS, TCP/IP, HTTP).
+       * Scaling Up (Vertical Scaling) vs. Scaling Out (Horizontal Scaling).
+       * Load Balancers (L4 vs. L7, various algorithms like Round Robin, Least Connections).
+       * Stateless vs. Stateful Architectures.
+
+   * 1.2: Data Storage & Management:
+       * Databases:
+           * SQL (Relational): When and why to use them. ACID properties.
+           * NoSQL: When and why. CAP Theorem (Consistency, Availability, Partition Tolerance).
+           * Types of NoSQL: Key-Value (e.g., Redis), Document (e.g., MongoDB), Wide-Column (e.g., Cassandra), Graph (e.g., Neo4j).
+       * Database Scaling Patterns: Replication (Master-Slave, Master-Master), Sharding/Partitioning (strategies like Algorithmic, Dynamic).
+
+   * 1.3: Caching:
+       * The "Why": Reducing latency and load.
+       * Caching Strategies: Cache-Aside, Read-Through, Write-Through, Write-Back.
+       * Where to Cache: Client-side, CDN (Content Delivery Network), Server-side (In-memory vs. Distributed).
+
+   * 1.4: Asynchronism & Communication:
+       * Message Queues: Decoupling services (e.g., RabbitMQ, SQS).
+       * Publish/Subscribe Model: Fan-out patterns (e.g., Kafka).
+       * APIs: REST vs. RPC (like gRPC).
+
+  ---
+
+  Module 2: Architectural Patterns & Concepts
+
+  With the building blocks understood, we'll learn the "blueprints"—common patterns for assembling them to solve recurring problems.
+
+   * 2.1: High-Level Architectures: Monolith vs. Microservices.
+   * 2.2: Key Patterns & Algorithms:
+       * Rate Limiting: Protecting your services from abuse.
+       * Consistent Hashing: Essential for distributed caches and databases.
+       * Leader Election: Coordinating work in a distributed environment.
+       * Search & Indexing: Using services like Elasticsearch for fast lookups.
+       * Blob/Object Storage: Handling large files like images and videos (e.g., AWS S3).
+
+  ---
+
+  Module 3: The Interview Gauntlet: Case Studies
+
+  This is the application phase. We will take a systematic approach to designing well-known systems, focusing on the trade-offs at each step. For each, we will
+  practice the interview format.
+
+   * 3.1: The "Warm-up" Problems:
+       * Design a URL Shortener (e.g., TinyURL).
+       * Design a Pastebin.
+
+   * 3.2: The "Classic" Problems:
+       * Design a Social Media Feed (e.g., Twitter, Facebook).
+       * Design a Ride-Sharing Service (e.g., Uber).
+       * Design a Media Streaming Service (e.g., YouTube, Netflix).
+       * Design a Search Autocomplete System.
+       * Design a Web Crawler.
+       * Design a Chat Application (e.g., WhatsApp, Messenger).
+
+  ---
+
+  Module 4: Mastering the Performance
+
+  Knowing the material is only half the battle. This module focuses on the communication and strategy of the interview itself.
+
+   * 4.1: The 4-Step Communication Framework:
+       1. Clarify & Scope: Ask clarifying questions. Define functional and non-functional requirements.
+       2. High-Level Design: Sketch the big picture. The "boxes and arrows" diagram.
+       3. Deep Dive & Justify: Zoom into specific components. Justify your choices with trade-offs.
+       4. Identify Bottlenecks & Scale: Proactively discuss potential issues, monitoring, and future scaling.
+
+   * 4.2: Back-of-the-Envelope Calculation:
+       * Practicing quick estimations for storage, bandwidth, and QPS (Queries Per Second) to ground your design in reality.
+
+  ---

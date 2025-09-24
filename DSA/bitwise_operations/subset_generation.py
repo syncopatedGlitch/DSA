@@ -38,6 +38,7 @@ def generate_subsets(nums):
 
     return all_subsets
 
+
 # --- Example ---
 if __name__ == "__main__":
     input_nums = [1, 2, 3]
