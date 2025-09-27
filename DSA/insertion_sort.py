@@ -1,9 +1,9 @@
 """
 Insertion Sort Algorithm
 
-Insertion sort builds the final sorted array one element at a time by repeatedly
-taking an element from the unsorted portion and inserting it into its correct
-position within the already sorted portion.
+Insertion sort builds the final sorted array one element at a time by
+repeatedly taking an element from the unsorted portion and inserting
+it into its correct position within the already sorted portion.
 
 Algorithm Intuition:
 - Similar to how you sort playing cards in your hand
@@ -30,6 +30,19 @@ Best suited for:
 - Small datasets (typically n < 50)
 - Nearly sorted arrays
 - As a subroutine in hybrid algorithms (e.g., Timsort)
+
+Example (step-by-step sorting):
+
+Given array: [5, 2, 4, 6, 1, 3]
+
+Step 1: [5, 2, 4, 6, 1, 3]  # 5 is sorted
+Step 2: [2, 5, 4, 6, 1, 3]  # Insert 2 before 5
+Step 3: [2, 4, 5, 6, 1, 3]  # Insert 4 between 2 and 5
+Step 4: [2, 4, 5, 6, 1, 3]  # 6 is already in correct position
+Step 5: [1, 2, 4, 5, 6, 3]  # Insert 1 at the beginning
+Step 6: [1, 2, 3, 4, 5, 6]  # Insert 3 between 2 and 4
+
+Final sorted array: [1, 2, 3, 4, 5, 6]
 """
 
 

@@ -2,15 +2,18 @@
 
 def merge_sort_recursion(inp_arr: list, left=0, right=None) -> list:
     """
-    Recursive merge sort using divide-and-conquer approach - splits array until base case, then merges back up.
+    Recursive merge sort using divide-and-conquer approach - splits
+    array until base case, then merges back up.
 
     CONCEPT:
-    Recursively divides the array into smaller halves until reaching single elements (base case),
-    then merges the sorted halves back together. Uses the call stack to manage the division
-    and merging process automatically.
+    Recursively divides the array into smaller halves until reaching
+    single elements (base case), then merges the sorted halves back
+    together. Uses the call stack to manage the division and merging
+    process automatically.
 
     ALGORITHM FLOW:
-    1. Check base case: if left >= right, array has 0-1 elements (already sorted)
+    1. Check base case: if left >= right, array has 0-1 elements
+       (already sorted)
     2. Find midpoint and divide array into left and right halves
     3. Recursively sort the left half completely
     4. Recursively sort the right half completely
@@ -62,15 +65,17 @@ def merge_sort_recursion(inp_arr: list, left=0, right=None) -> list:
 
 def merge_sort_iterative(arr: list):
     """
-    Iterative merge sort using bottom-up approach - builds sorted subarrays from smallest to largest.
+    Iterative merge sort using bottom-up approach - builds sorted
+    subarrays from smallest to largest.
     ### The Systematic Growth Pattern
 
-    The key insight is that you can control the growth systematically by doubling the size of what you're
-    working with at each level:
+    The key insight is that you can control the growth systematically
+    by doubling the size of what you're working with at each level:
 
     Level 1: Work with chunks of size 1 (individual elements)
     • Every single element is already a "sorted array"
-    • Merge adjacent pairs: element 0 with element 1, element 2 with element 3, etc.
+    • Merge adjacent pairs: element 0 with element 1, element 2 with
+      element 3, etc.
     • Result: You now have sorted chunks of size 2
 
     Level 2: Work with chunks of size 2
@@ -83,7 +88,8 @@ def merge_sort_iterative(arr: list):
     • Merge adjacent pairs of these chunks
     • Result: You now have sorted chunks of size 8
 
-    Continue this pattern until your chunk size equals or exceeds the array length.
+    Continue this pattern until your chunk size equals or
+    exceeds the array length.
 
     ALGORITHM FLOW:
     1. Start with subarray size = 1 (every single element is "sorted")
@@ -112,12 +118,15 @@ def merge_sort_iterative(arr: list):
     n = len(arr)
     if n <= 1:
         return arr
-    # Start with subarray of size 1 and then double at the end of each iteration.
+    # Start with subarray of size 1 and then double at the end of
+    # each iteration.
     size = 1
     while size < n:
         left = 0
-        # The n - 1 is essentially asking: "Is there room for at least one more element after the current position?"
-        # If yes, we might have a pair to merge. If no, we're done with this level.
+        # The n - 1 is essentially asking: "Is there room for at
+        # least one more element after the current position?"
+        # If yes, we might have a pair to merge. If no, we're done
+        # with this level.
         while left < n - 1:
             # why right is left + (2 * size) - 1 and not left + (2 * size).
             # Example
@@ -131,9 +140,11 @@ def merge_sort_iterative(arr: list):
             # right = left + 2 * size
             #     = 0 + 2 * 1
             #     = 2
-            # This gives us right = 2, which means we'd try to include index 2 in our second chunk. But our second chunk
+            # This gives us right = 2, which means we'd try to include index 2
+            # in our second chunk. But our second chunk
             # should only be index 1!
-            right = min(left + (2 * size) - 1, n - 1)  # min with n-1 keeps within array bounds
+            right = min(left + (2 * size) - 1, n - 1)
+            # min with n-1 keeps within array bounds
             mid = min(left + size - 1, n - 1)
 
             if mid < right:
