@@ -1,0 +1,469 @@
+Module 1.1: Single-Server to Multi-Server
+
+  Imagine you've just built a fantastic new web application. You've coded it on your laptop, and it works perfectly. Now, you want the world to use it.
+
+  The Single-Server World
+
+  The simplest way to do this is to deploy your entire application—web server, business logic, database—onto a single server in the cloud.
+
+   * A user types www.your-app.com into their browser.
+   * DNS (Domain Name System), the internet's phonebook, translates this friendly domain name into the server's public IP address (e.g., 54.172.18.19).
+   * The user's browser sends an HTTP request directly to that IP address.
+   * Your server processes the request and sends back an HTTP response.
+
+  This is our baseline. It's simple, easy to manage, and cheap.
+
+  Question: What are the two most immediate and critical problems you will face with this single-server setup as your application gains popularity?
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > performance issues and single point of failure since all of it is hosted on a single machine, if the machine goes down, everything goes down.  │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Precisely. You've hit on the two core limitations:
+
+   1. Scalability: The server has finite resources (CPU, RAM, network I/O). As traffic increases, the server becomes overwhelmed, leading to slow response times and a
+      poor user experience. This is the performance issue you mentioned.
+   2. Availability: As you said, if that single server fails for any reason—hardware malfunction, OS crash, a bad software update—your application is completely
+      offline. This is the Single Point of Failure (SPOF).
+
+  To solve these problems, we must move beyond a single server. The solution, as you can guess, is to add more servers. This brings us to our first major
+  architectural decision: how we add that capacity.
+
+  There are two ways to scale:
+
+   * Vertical Scaling (Scaling Up): You make your single server more powerful. You add more CPU cores, more RAM, a faster disk. Think of it as replacing your car's
+     4-cylinder engine with a V8. It's simple, but you eventually hit a physical and financial limit. There's only so big a server you can build.
+
+   * Horizontal Scaling (Scaling Out): You add more servers. Instead of one massive server, you might have three, ten, or thousands of smaller, commodity servers
+     working in parallel. Think of it as adding more cars to your fleet.
+
+  For modern, large-scale applications, horizontal scaling is the default approach. It provides better fault tolerance and, in theory, limitless scale.
+
+  This solution—adding more servers—immediately solves the single point of failure and provides a path to better performance. However, it introduces a new,
+  fundamental challenge.
+
+  Question: We now have three identical web servers. When a user's request comes in from the internet, how do we decide which of the three servers should handle
+  it? How do we intelligently distribute the traffic?
+
+╭───────────────────────────╮
+│  > using a load balancer  │
+╰───────────────────────────╯
+
+✦ Correct. We introduce a Load Balancer.
+
+  The Load Balancer is a critical piece of infrastructure that acts as a "traffic cop." It sits in front of your application servers and does two main things:
+
+   1. Distributes incoming requests across the available servers, preventing any single server from being overloaded.
+   2. Performs Health Checks. It constantly pings the servers in its pool. If a server stops responding, the load balancer marks it as "unhealthy" and immediately
+      stops sending traffic to it, automatically routing around the failure. This eliminates our single point of failure.
+
+  Now, not all load balancers are the same. For an interview, you should know the two main types:
+
+   * Layer 4 (L4) Load Balancer: This operates at the transport layer (TCP/UDP). It makes routing decisions based on the source/destination IP addresses and ports.
+     It doesn't know anything about the content of the request (e.g., the URL, headers, or cookies). It's very fast and simple.
+
+   * Layer 7 (L7) Load Balancer: This operates at the application layer (HTTP/HTTPS). It's "smarter" because it can inspect the request content. This allows for more
+     intelligent routing. For example, it can route requests for /api to one set of servers (your application logic) and requests for /images to another set of
+     servers (perhaps a dedicated image storage service).
+
+  To distribute the traffic, the load balancer uses an algorithm. The most common are:
+   * Round Robin: Server 1, then Server 2, then Server 3, and back to 1.
+   * Least Connections: Sends the new request to the server that currently has the fewest active connections.
+   * IP Hash: Uses a hash of the client's IP address to determine which server to send the request to.
+
+  This brings us to a very important concept. With the "IP Hash" algorithm, a user from a specific IP address will always be directed to the same server.
+
+  Question: Why might it be important for a user to be consistently routed to the same server for their entire session? What problem does this solve, and what is
+  the formal name for this application design?
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > This is important because if the user has a certain set of data added to their session and that session resides on server 1, they wont see that session specific │
+│     data on server2. This concept is called sticky sessions i think. Also, aside to this,  is the AWS equivalent of L4 LB is a network load balancer and L7 LB is   │
+│    an application load balancer? just curious to know.                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Excellent questions on both fronts. Let's tackle them in order.
+
+  First, regarding your AWS question:
+  You are absolutely correct.
+   * An AWS Application Load Balancer (ALB) is a Layer 7 load balancer. It's application-aware and is the common choice for balancing HTTP/HTTPS traffic.
+   * An AWS Network Load Balancer (NLB) is a Layer 4 load balancer. It's built for extreme performance and routes traffic based on IP protocol data.
+
+  It's a perfect real-world mapping of these concepts.
+
+  ---
+
+  Now, returning to your main point, you are spot on. The mechanism is indeed called Sticky Sessions (or session affinity), and it's used to support what we call a
+  Stateful Architecture.
+
+   * Stateful Architecture: In this design, the server stores client-specific data (the "state") in its memory from one request to the next. This could be user
+     session information, items in a shopping cart, or form data in progress. Sticky sessions are required here because if a user's next request lands on a different
+     server, that new server has no knowledge of their state, and the session breaks.
+
+  However, as a system designer, you should be aware that while stateful architectures seem convenient, they introduce significant problems at scale:
+
+   1. Poor Fault Tolerance: If the server a user is "stuck" to fails, their session data is lost. This often means the user is logged out or their shopping cart is
+      emptied, creating a terrible user experience.
+   2. Scaling Complications: When you add a new server, it has no sessions. When you need to take a server down for maintenance, you have to wait for all its sessions
+      to expire, which can be a complex draining process. The load balancer also can't freely distribute load based on which server is least busy.
+
+  This leads us to the preferred modern design: the Stateless Architecture.
+
+   * Stateless Architecture: In this design, the application server stores no client state between requests. Each incoming request is treated as an independent
+     transaction and must contain all the information necessary for the server to process it. The servers become pure computation engines.
+
+  This is a far more robust and scalable model. You can add or remove servers from the pool at any time without fear of losing user sessions. If a server fails,
+  the load balancer simply reroutes the user's next request to a healthy server, and the user's experience is uninterrupted.
+
+  This raises a critical question.
+
+  Question: If the application server is no longer responsible for storing the user's session data in a stateless architecture, where does that state go?
+
+
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > in a centralized database or a persistent cache like Redis that all application servers connect to?  │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Precisely. That is the correct and standard solution.
+
+  You externalize the state to a centralized data store that is accessible to all your application servers. The two options you provided are the most common choices:
+
+   1. Distributed Cache (e.g., Redis, Memcached): This is the preferred solution for session management. The server gets a request, retrieves the session data from
+      the cache using a session ID stored in a user's cookie, processes the request, and potentially writes the updated session back to the cache.
+       * Pro: It is extremely fast because the data lives in RAM. This keeps your application's response time low.
+       * Con: The data is generally volatile. If the cache server reboots, the sessions are lost. (While some caches like Redis have persistence options, they are
+         primarily used for their speed).
+
+   2. Centralized Database (SQL or NoSQL): This works similarly but uses your main database.
+       * Pro: The data is durable and will survive reboots.
+       * Con: Databases are much slower than in-memory caches. Adding a database read to every single HTTP request to fetch session data can create a significant
+         performance bottleneck and add a heavy load to your primary database.
+
+  For 99% of session management use cases, a distributed cache like Redis is the superior choice due to the performance benefits. You offload this high-volume,
+  low-consequence traffic from your critical database.
+
+  ---
+
+  This is a perfect transition. Your answer has naturally led us from the topic of compute (servers) and networking (load balancers) to the next fundamental
+  building block.
+
+  Module 1.2: Data Storage & Management
+
+  We've established that stateless servers rely on a separate, centralized data layer. Now, let's dive into that layer. When you begin a new project, one of the
+  first and most critical architectural decisions is choosing your primary database.
+
+  Question: In your experience, what are the key factors or characteristics you would consider when deciding between a traditional SQL (Relational) database and a
+  NoSQL database?
+
+
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > if you need to store structured documents like json or yaml, and want higher performance, use no sql, but if your data needs to be stored into tables, use   │
+│    sql? I am not clear on this sql and nosql distinction, so please elaborate on this topic a bit more than others and teach me how to go about chosing a       │
+│    specific type of db                                                                                                                                          │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Of course. This is a crucial topic, and your confusion is common because the distinction is much deeper than just the format of the data. Let's dedicate this
+  session to clarifying it properly.
+
+  The choice between SQL and NoSQL is not about "tables vs. JSON." It's a fundamental trade-off between Consistency, Flexibility, and Scale.
+
+  Let's break it down using a clear framework.
+
+  ---
+
+  The Core Distinction: SQL vs. NoSQL
+
+  1. The Data Model & Schema
+
+   * SQL (e.g., PostgreSQL, MySQL): Implements a Schema-on-Write.
+       * This means you must define your structure first. You create tables with specific columns and data types (e.g., INTEGER, VARCHAR(255)).
+       * If you want to store a piece of data, it must conform to this predefined schema.
+       * Analogy: It's like filling out a highly structured tax form. Every box is predefined, and you must put the right type of information in the right box.
+
+   * NoSQL (e.g., MongoDB, Cassandra): Implements a Schema-on-Read.
+       * This means you can store data without a predefined structure. You can throw a JSON document with nested fields and arrays directly into a collection. The
+         database doesn't enforce a schema.
+       * The "schema" is applied by your application when it reads and interprets the data.
+       * Analogy: It's like saving notes in a Word document. You can have headings, lists, and paragraphs in any order you want. It's flexible.
+
+  2. The Consistency Guarantees
+
+  This is the most critical difference for system design.
+
+   * SQL: Guarantees ACID transactions. This is a promise that your data will always be in a reliable state.
+       * Atomicity: A transaction (e.g., transferring money) either completes 100% or not at all. It can't be left half-finished.
+       * Consistency: Any transaction will bring the database from one valid state to another.
+       * Isolation: Multiple transactions occurring at the same time will not interfere with each other.
+       * Durability: Once a transaction is committed, it is permanently saved and will survive any system crash.
+
+   * NoSQL: Generally prioritizes performance and scale over strict consistency. It often provides Eventual Consistency.
+       * This means if you write a piece of data, it will take some time (milliseconds) for that change to propagate to all replicas. For a brief period, a read
+         request might get stale data.
+       * This is a core concept of the CAP Theorem, which states a distributed system can only provide two out of three guarantees: Consistency, Availability, and
+         Partition Tolerance. NoSQL databases often choose Availability and Partition Tolerance.
+
+  3. The Scaling Model
+
+   * SQL: Traditionally designed to Scale Vertically.
+       * To handle more load, you buy a bigger, more powerful server (more CPU, RAM). This is expensive and has a hard limit.
+       * Horizontally scaling a relational database (called "sharding") is possible but is extremely complex to implement and manage correctly.
+
+   * NoSQL: Natively designed to Scale Horizontally.
+       * To handle more load, you just add more commodity servers to the database cluster. They are built from the ground up to be distributed systems. This is
+         cheaper and can scale almost infinitely.
+
+  ---
+
+  How to Choose: A Practical Guide
+
+  Choose SQL when:
+   * You need ACID compliance. This is non-negotiable for systems like banking, financial trading, or e-commerce order processing. You cannot afford to lose a
+     transaction or have inconsistent data.
+   * Your data is highly structured and the schema is stable. For example, user credentials (ID, username, hashed password) are unlikely to change.
+   * You need to perform complex queries. SQL's JOIN capability is incredibly powerful for querying across different, related tables.
+
+  Choose NoSQL when:
+   * You need extreme scale and high write throughput. For example, logging user interactions, collecting data from IoT sensors, or handling real-time analytics.
+   * Your application needs to be highly available and can tolerate eventual consistency. A few seconds of lag on a social media post's view count is acceptable.
+   * Your data schema is rapidly evolving or non-existent. If you're in a startup and your product is changing, a flexible schema allows you to iterate quickly
+     without performing complex database migrations. Good for user profiles, product catalogs, or content management.
+
+  ---
+
+  "NoSQL" is not one thing
+
+  Finally, it's important to know that "NoSQL" is a category, not a specific database. When you choose NoSQL, you're choosing one of these types:
+
+   * Document Stores (e.g., MongoDB): Great for storing self-contained JSON-like documents. The go-to for user profiles, product catalogs, and general-purpose
+     flexible data.
+   * Key-Value Stores (e.g., Redis, DynamoDB): The simplest model. Used for caching, session storage, and leaderboards where you just need a fast lookup by a single
+     key.
+   * Wide-Column Stores (e.g., Cassandra, ScyllaDB): Built for massive write throughput on a huge scale. Excellent for time-series data, analytics, and logging.
+   * Graph Stores (e.g., Neo4j): Used when the relationships between data points are the most important feature. Perfect for social networks, recommendation engines,
+     and fraud detection.
+
+  Let's make this practical.
+
+  Scenario Question: You are designing a new e-commerce platform. Which type of database (SQL or a specific NoSQL type) would you choose for the customer orders
+  and payments system, and which would you choose for the product catalog and user reviews? Justify your choices based on the principles we just discussed.
+
+
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > for customer orders and payments, atomicity and consistency are the key and orders would generally have a well defined schema so my choice woudl be a SQL db    │
+│    like postgres. For product catalog and user reviews, since consistency isnt a requirement and product catalogs can be under consistent change, and the same     │
+│    goes for user reviews i.e it isnt a problem is there is eventual consistency but the scale of user reviews might be much higher than order related transactions │
+│     on the application, my choice would be noSQL db like mongoDB.                                                                                                  │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ That is a perfect answer. You have demonstrated a clear and correct understanding of the trade-offs, and your reasoning is exactly what an interviewer looks for.
+  You didn't just name technologies; you justified your choices based on the specific requirements of each subsystem.
+
+  Let's formalize your answer into an interview-ready summary:
+
+   * For Customer Orders and Payments: You correctly chose a SQL database like PostgreSQL. Your reasoning was flawless: this is the financial core of the application
+     and must be treated as the "system of record." The requirements are strict ACID compliance to guarantee that every order and payment is processed reliably and
+     atomically. The data schema is well-defined and stable. This is the classic use case for a relational database.
+
+   * For the Product Catalog and User Reviews: You correctly chose a Document-based NoSQL database like MongoDB. Your justification was excellent:
+       * Schema Flexibility: A product's attributes can change frequently. New specs are added, marketing fields come and go. A document database handles this
+         without requiring complex schema migrations.
+       * Scalability & Performance: A product page needs to load quickly. With a document model, you can store all information about a product—details, specs, and
+         even recent reviews—in a single document. This avoids expensive JOIN operations and allows you to retrieve everything needed for a product page in a single,
+         fast read. The high volume of user reviews can be handled by the horizontal scaling capabilities of MongoDB.
+       * Consistency Model: Eventual consistency is perfectly acceptable. If a new review takes a few seconds to appear for all users, it does not impact the
+         system's function.
+
+  You've demonstrated the core principle of modern system design: Polyglot Persistence. You don't use one database for everything. You choose the right tool for
+  the right job.
+
+  ---
+
+  Now that we've chosen our databases, let's talk about scaling them.
+
+  Imagine your e-commerce site is a massive success. Your PostgreSQL database, which handles all the orders, is starting to get overwhelmed. You notice that while
+  writes are manageable, the sheer volume of read requests is causing the CPU to spike. Other internal services, like analytics and reporting, are constantly
+  querying the orders table.
+
+  You cannot switch to NoSQL for this system because you absolutely need the ACID guarantees.
+
+  Question: What is the most common and fundamental pattern used to scale a relational database to handle a very high read load?
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > before we move on to caching, can you explain the CAP theorem in detail and how it applies to sql and nosql db's?  │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Excellent question. It's a perfect time to cover this. Understanding the CAP theorem is fundamental to understanding distributed systems, and it's the theoretical
+  backbone behind the entire SQL vs. NoSQL discussion.
+
+  Let's pause on caching and do a deep dive here.
+
+  The CAP Theorem
+
+  The CAP Theorem, first formulated by computer scientist Eric Brewer, states that it is impossible for a distributed data store to simultaneously provide more than
+  two of the following three guarantees:
+
+   1. Consistency
+   2. Availability
+   3. Partition Tolerance
+
+  Think of it as a "pick two" menu for designing distributed systems. Let's define each term precisely.
+
+  C: Consistency (Strong Consistency)
+
+   * What it means: Every read request receives the most recent write or an error. When you write a piece of data, all subsequent reads of that data will return the
+     newly written value. All nodes in the system have the same view of the data at the same time.
+   * Example: You update your profile name from "Chris" to "Christopher". If the system is consistent, any user anywhere who immediately tries to view your profile
+     will see "Christopher".
+
+  A: Availability
+
+   * What it means: Every request receives a non-error response, without the guarantee that it contains the most recent write. The system is always up and running
+     and will always give you an answer.
+   * Example: You ask the system for your profile name. It will always return a name, even if it's the slightly older "Chris" because the node you're talking to
+     hasn't yet learned about the "Christopher" update. It prioritizes responding over being perfectly correct.
+
+  P: Partition Tolerance
+
+   * What it means: The system continues to operate even if the network connection between its nodes is broken (a "network partition"). Nodes are separated into
+     groups that can't communicate with each other.
+   * This is the key: For any real-world distributed system that communicates over a network, network failures are a fact of life. Switches fail, routers
+     misconfigure, cables get cut. Therefore, Partition Tolerance (P) is not optional. A modern distributed system must be partition tolerant.
+
+  The Real Choice: C vs. A
+
+  Since we must always design for Partition Tolerance (P), the CAP theorem's real trade-off is: When a network partition happens, do you choose Consistency or
+  Availability?
+
+   * Choose C over A (A CP System):
+       * When a partition occurs, the system decides to preserve consistency by sacrificing availability.
+       * How it works: If a node cannot communicate with other nodes to verify it has the most up-to-date data, it will stop serving requests. It will return an
+         error or time out rather than risk returning stale data.
+       * Use Case: Banking systems, financial transactions, and any system where data correctness is the absolute highest priority.
+
+   * Choose A over C (An AP System):
+       * When a partition occurs, the system decides to preserve availability by sacrificing strong consistency.
+       * How it works: Even if a node is cut off from its peers, it will continue to serve requests using the last version of the data it has. The data might be
+         stale, but the system remains online. This leads to Eventual Consistency, where the system guarantees that if no new writes are made, all nodes will
+         eventually converge to the same state.
+       * Use Case: Social media feeds, post likes, view counters. It's better for a user to see a slightly old like count than to see an error page. Amazon's
+         shopping cart is a classic example; they would rather you be able to add an item to a slightly out-of-sync cart than not be able to add an item at all.
+
+  Application to SQL and NoSQL
+
+   * Traditional SQL Databases (e.g., single-node PostgreSQL):
+       * A single-node database is not a distributed system, so there are no network partitions to worry about. By definition, it is a CA system (Consistent and
+         Available).
+       * When you start distributing SQL databases (e.g., using replication or sharding), you are forced into the CAP trade-off. Most distributed SQL solutions will
+         try to be CP systems, as their main value proposition is the consistency guarantee of ACID.
+
+   * NoSQL Databases:
+       * NoSQL databases were born to be distributed and were designed with the CAP theorem in mind.
+       * AP Systems: Most NoSQL databases like Cassandra and DynamoDB are AP systems. They are built for massive scale and extreme availability, making them a
+         perfect fit for use cases that can tolerate eventual consistency.
+       * CP Systems: Some NoSQL databases like MongoDB and HBase can be configured as CP systems. They provide more controls, allowing you to specify, for example,
+         that a write must be confirmed by a majority of nodes before it is considered successful, thus prioritizing consistency.
+
+  This was a crucial detour. Now, with this understanding of consistency trade-offs in mind, let's return to our discussion on caching.
+
+  As a refresher: What is the most common type of cache that a user's request might hit before it even reaches our load balancer?
+
+
+╭─────────────────────────────────────────────────────────────╮
+│  > client side cache or edge location caches in aws terms?  │
+╰─────────────────────────────────────────────────────────────╯
+
+✦ You've named two, and both are correct! Let's distinguish between them.
+
+  The first one you mentioned, the Client-Side Cache, is the absolute closest cache to the user. This is the cache inside their own web browser. When a user visits
+  a site, the browser can store files like images, CSS, and JavaScript on the user's local disk. When they visit a second page, the browser can load those files
+  directly from the disk without making a network request at all. It's the fastest cache possible.
+
+  But your second answer, "edge location caches," is exactly the layer of infrastructure I was pointing to. The industry term for this is a CDN (Content Delivery
+  Network).
+
+  What is a CDN?
+
+  A CDN is a globally distributed network of proxy servers. These servers are located in data centers all over the world, which are called Edge Locations or Points
+  of Presence (PoPs).
+
+  The purpose of a CDN is to cache static content (files that don't change often, like images, videos, CSS, and JavaScript files) as close as possible to your
+  end-users.
+
+  How it Works:
+
+   1. A user in London requests an image from your website.
+   2. Instead of connecting to your application server in New York, DNS routes their request to the nearest CDN edge location, which is also in London.
+   3. The London edge server checks its cache. If it doesn't have the image, it makes a request to your origin server in New York, retrieves the image, saves a copy
+      to its cache, and sends it to the user.
+   4. A few minutes later, another user in Manchester requests the same image. Their request is also routed to the London edge server.
+   5. This time, the image is in the cache. The edge server serves it directly and instantly. The request never even reaches your load balancer or application server.
+
+  Primary Benefits:
+
+   1. Reduced Latency: The main benefit for users. Data travels a much shorter physical distance, so websites load significantly faster.
+   2. Reduced Load on Origin: The main benefit for your infrastructure. The CDN absorbs all the traffic for your static assets. This dramatically reduces the load on
+      your application servers and lowers your bandwidth costs.
+
+  A CDN is a fundamental component for any application with a global user base and is our first line of defense in the caching hierarchy.
+
+  ---
+
+  So, a CDN handles static assets. Now, let's consider a request for dynamic data—something specific to the user that can't be served from a CDN, like their
+  shopping cart contents or profile information.
+
+  The request bypasses the CDN, goes through our load balancer, and hits an application server. The server needs to fetch this data, most likely from a database.
+
+  We've already discussed using a distributed cache (like Redis) for session data. What is another extremely common use case for an in-memory, distributed cache to
+  prevent our application from hitting the database on every single request?
+
+
+╭───────────────────────╮
+│  > db query caching?  │
+╰───────────────────────╯
+
+✦ Exactly. Caching database queries is one of the most effective strategies for improving application performance and reducing database load.
+
+  This is typically implemented using a pattern called Cache-Aside. It's a simple but powerful concept that works exactly as you'd imagine.
+
+  Here's the logic for a read request:
+
+   1. Your application code needs to fetch some data (e.g., a user's profile).
+   2. First, it checks the cache. It constructs a unique key (e.g., user:123) and asks the distributed cache (Redis) if it has data for that key.
+   3. Cache Hit: If the data exists in the cache, it is returned directly to the application. The database is never touched. This is the fast path.
+   4. Cache Miss: If the data is not in the cache, the application then makes a query to the database to get the data.
+   5. The application receives the data from the database and, crucially, it then saves that data into the cache with the same key (user:123).
+   6. The data is returned to the client.
+
+  The next time a request comes in for user 123, it will be a cache hit.
+
+  By doing this, you can serve a huge percentage of your read requests directly from the lightning-fast in-memory cache, protecting your slower, disk-based
+  database from being overwhelmed.
+
+  The Hardest Problem: Cache Invalidation
+
+  This pattern works beautifully for reads, but it introduces a new, classic problem.
+
+  Imagine we have cached the data for a product with a price of $100. An administrator then updates the price in the database to $90. The cache, however, still
+  holds the stale data: $100.
+
+  This is called Cache Invalidation, and it's famously one of the hardest problems in computer science. How do you ensure the cache is updated when the source of
+  truth (the database) changes?
+
+  There are a few common strategies:
+
+   1. Set a TTL (Time-To-Live): When you cache the data, you tell the cache to automatically evict it after a certain period (e.g., 5 minutes). This is simple, but it
+      means your data can be stale for up to 5 minutes.
+   2. Write-Through Cache: When the price is updated, the application writes the change to the cache first, and then to the database. This keeps the cache consistent,
+      but it makes your write operations slower.
+   3. Explicit Invalidation: When the price is updated, the application writes the change to the database and then immediately sends a DELETE command to the cache to
+      remove the old entry. The next read will be a cache miss, forcing a fetch of the new, correct data from the database. This is a very common and effective
+      pattern.
+
+  ---
+
+  This concludes our module on caching. We've seen how caching can be applied at multiple layers: the user's browser, a global CDN for static assets, and a
+  distributed cache for database queries.
+
+  We have now covered all the fundamental building blocks in Module 1. We understand servers, load balancers, databases (SQL/NoSQL), replication, sharding, and
+  caching.
