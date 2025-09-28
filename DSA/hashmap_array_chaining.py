@@ -1,7 +1,8 @@
 """Hash Map Implementation with Chaining
 
-This module implements a hash map (hash table) using chaining for collision resolution.
-Chaining handles collisions by maintaining a linked list at each array index, allowing
+This module implements a hash map (hash table) using chaining
+for collision resolution. Chaining handles collisions by
+maintaining a linked list at each array index, allowing
 multiple key-value pairs to coexist at the same hash location.
 
 Chaining Collision Resolution:
