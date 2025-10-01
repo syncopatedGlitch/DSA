@@ -1,0 +1,95 @@
+Here’s a breakdown of how to explain push notification services from a system design perspective, using the
+  Uber example as a guide.
+
+  The Core Problem: Why Push Notifications Exist
+
+  In a typical client-server model, the client initiates all requests. However, for an app like Uber, the server needs to send information to the client without
+  the client constantly asking for it. For example, sending "Your driver has arrived."
+
+  You might think, "Why can't the app just keep asking the server every 5 seconds?" This is called polling, and it's a bad idea for mobile for two main reasons:
+
+   1. Battery Drain: Constantly waking up the phone's radio to make a network request is one of the fastest ways to kill a battery.
+   2. Network & Server Load: Millions of devices polling every few seconds would create enormous, unnecessary traffic and overload the backend servers.
+
+  The solution is a push model, where the server can initiate contact with the device. However, servers can't directly "find" and talk to a specific mobile device
+  on the internet due to firewalls, NAT gateways, and dynamic IP addresses.
+
+  This is where the platform-specific push notification services come in. They act as a trusted, persistent intermediary.
+
+  The Generic Architecture (The Key Players)
+
+  Regardless of whether it's iOS or Android, the architecture involves three main components:
+
+   1. The PNS (Push Notification Service): This is a massive, globally distributed service run by Apple (APNs - Apple Push Notification service) or Google (FCM -
+      Firebase Cloud Messaging). Its only job is to receive messages from app developers and deliver them to the correct devices.
+   2. The Provider (Your Backend Server): This is your application's backend (e.g., Uber's servers). It decides what message to send and when to send it.
+   3. The Client (The App on the Device): The iOS/Android device running your app.
+
+  The core idea is that the device maintains a single, persistent, and highly optimized TCP connection to the PNS (APNs/FCM), not to every single app's backend.
+  The OS manages this connection for maximum battery efficiency. All apps on the device share this one connection.
+
+  ---
+
+  The Workflow: From App Install to Notification
+
+  Here is the step-by-step process, which is crucial for a system design interview.
+
+  Phase 1: Registration (The Handshake)
+
+  This happens when the user first installs and opens your app.
+
+   1. App Starts: The Uber app on a new phone is launched.
+   2. Request Token: The app makes a call to the OS, asking, "Please give me a push notification token."
+   3. OS to PNS: The phone's OS forwards this request to the appropriate PNS (APNs for an iPhone, FCM for an Android device).
+   4. PNS Creates & Returns Token: The PNS generates a unique, long, and complex string called a Device Token (on iOS) or a Registration Token (on Android). This
+      token is the unique "address" for this specific app on this specific device.
+   5. Token to App: The PNS sends this token back to the device's OS, which then passes it to your app.
+   6. App to Your Backend: This is a critical step. Your app now sends this unique token to your backend server (e.g., Uber's servers). Your backend then stores this
+      token in a database, mapping it to the specific user (e.g., user_id: 123 -> token: 'a1b2c3d4...').
+
+  Now, your backend has a way to contact User 123 without knowing their IP address. It just needs to tell the PNS to send a message to the stored token.
+
+  Phase 2: Sending a Push Notification (The Uber Ride)
+
+  Now, let's trace the "Your ride is confirmed" notification.
+
+   1. User Action: The user requests a ride from the Uber app. This is a standard API call from the client to the Uber backend.
+   2. Backend Logic: Uber's backend receives the request, runs its logic to find and assign a driver.
+   3. Compose Notification: Once a driver is assigned, the backend decides it needs to notify the user. It constructs the notification payload (e.g., {"message":
+      "Your driver is on the way!", "driver_id": "456"}).
+   4. Provider to PNS: The Uber backend finds the user's stored push token from its database. It then sends a request to the PNS (APNs or FCM). This request
+      essentially says:
+       * Destination: The user's unique device/registration token.
+       * Payload: The JSON data for the notification.
+       * Authentication: A secret key or certificate that proves the request is coming from Uber's legitimate servers and not an imposter.
+   5. PNS to Device: The PNS receives this request. It uses the token to find the specific device and sends the payload down the persistent connection it maintains
+      with that device.
+   6. OS Receives & Displays: The device's OS receives the payload. It sees the notification is for the Uber app and displays the message on the user's screen. It can
+      also deliver a "data" payload silently to the app to trigger a background refresh, so when the user opens the app, the new driver information is already there.
+
+  Platform Specifics & Key Design Concepts
+
+   * APNs (iOS):
+       * Extremely focused on privacy and battery life.
+       * Historically more rigid. All notifications were routed through the OS, which would then show them or pass them to the app.
+       * Uses either a static certificate (.p12) or a more modern JSON Web Token (.p8 key) for authenticating your backend with Apple's servers.
+
+   * FCM (Android):
+       * More flexible. It's part of the Firebase suite of tools.
+       * Relies on Google Play Services being on the device to manage the connection.
+       * Has two types of messages:
+           * Notification messages: High-level, automatically handled by the OS to display a notification.
+           * Data messages: A silent payload of key-value pairs that is delivered directly to your app's code, giving you full control over what to do with it (e.g.,
+             update internal state, show a custom in-app view).
+
+  Summary for an Interview
+
+  "When a user requests an Uber, the app sends the request to our backend. When we find a driver, our backend doesn't talk to the phone directly. Instead, it sends
+  a request to Google's or Apple's Push Notification Service (FCM/APNs).
+
+  This request contains two key things: the device token we stored when the user first registered, which is the device's unique address, and the payload, which is
+  the message content.
+
+  The PNS then uses its persistent, battery-optimized connection to the device to deliver that payload. The phone's OS receives it and presents the notification to
+  the user. This architecture allows us to be scalable, reliable, and power-efficient, as we offload the complexity of maintaining millions of persistent
+  connections to the platform providers."
