@@ -121,7 +121,11 @@ def find_median_sorted_array_optimised(arr1, arr2) -> float:
 
     while low <= high:
         partition_x = (low + high) // 2
+        # partition on the second array would be:
+        # total length of combined array divided by 2, minus
+        # the number of elements already in left partition of arr1
         partition_y = (m + n + 1) // 2 - partition_x
+
         max_left_x = arr1[partition_x - 1] if partition_x != 0 else -math.inf
         min_right_x = arr1[partition_x] if partition_x != m else math.inf
         max_left_y = arr2[partition_y - 1] if partition_y != 0 else -math.inf
@@ -129,14 +133,12 @@ def find_median_sorted_array_optimised(arr1, arr2) -> float:
 
         if max_left_x <= min_right_y and max_left_y <= min_right_x:
             if (m + n) % 2 == 0:
-                median = (
+                return (
                     max(max_left_x, max_left_y)
                     + min(min_right_x, min_right_y)
                     ) / 2
-                return median
             else:
-                median = max(max_left_x, max_left_y)
-                return median
+                return max(max_left_x, max_left_y)
         elif max_left_x > min_right_y:
             high = partition_x - 1
         else:
