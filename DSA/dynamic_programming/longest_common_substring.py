@@ -39,8 +39,7 @@ The final answer will be the number in the bottom-right corner of the table.
 
 Why the Max() of two substring matches?
 
-Let me clarify with a concrete example, as the term "probability" can be
-misleading here. It's not about chance; it's about exploring two
+Let me clarify with a concrete example. It's about exploring two
 alternative paths and picking the best one.
 
 Let's say our strings are:
