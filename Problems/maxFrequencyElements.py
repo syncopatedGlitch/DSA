@@ -18,8 +18,9 @@ def maxFrequencyElements(nums: list) -> int:
 
 
 def test():
-    nums = [1,2,2,3,1,4]
+    nums = [1, 2, 2, 3, 1, 4]
     res = maxFrequencyElements(nums)
     print(res)
+
 
 test()
