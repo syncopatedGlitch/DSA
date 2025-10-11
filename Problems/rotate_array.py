@@ -66,6 +66,11 @@ def rotate_array_optimized(arr: list, k: int) -> list:
     Reverse the remaining n - k elements.
     '''
     length_arr = len(arr)
+    if length_arr == 0:
+        return arr
+
+    k = k % length_arr  # Normalize k
+
     step_1 = __reverse(arr, 0, len(arr) - 1)
     step_2 = __reverse(step_1, 0, k - 1)
     final_arr = __reverse(step_2, k, length_arr - 1)
@@ -95,3 +100,9 @@ if __name__ == '__main__':
     rotated_array = rotate_array_optimized(arr, k)
     print(f"rotated array is {rotated_array}")
     assert rotated_array == [3, 99, -1, -100]
+    arr = [-1]
+    k = 2
+    rotated_array = rotate_array_optimized(arr, k)
+    print(f"rotated array is {rotated_array}")
+    assert rotated_array == [-1]
+    print("All tests passed")
