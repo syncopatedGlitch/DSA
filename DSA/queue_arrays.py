@@ -1,8 +1,9 @@
 """Queue Implementation Using Circular Array
 
-This module implements a queue data structure using a fixed-size circular array.
-The circular approach efficiently reuses array space by wrapping indices around
-when they reach the array boundary.
+This module implements a queue data structure using a
+fixed-size circular array.
+The circular approach efficiently reuses array space by
+wrapping indices around when they reach the array boundary.
 
 Key Features:
 - FIFO (First In, First Out) ordering
@@ -12,7 +13,8 @@ Key Features:
 - Uses front/rear pointers with modular arithmetic
 
 Implementation Details:
-- Array size = capacity + 1 (one extra slot to distinguish full vs empty)
+- Array size = capacity + 1 (one extra slot for buffer
+  between front and rear pointer to avoid collision)
 - front: points to first element to be dequeued
 - rear: points to next position for enqueue
 - Circular increment: (index + 1) % capacity
@@ -24,7 +26,8 @@ Implementation Details:
 class Queue:
     def __init__(self, capacity):
         self.capacity = capacity + 1
-        self.data = [None] * (self.capacity + 1)  # Initialize the fixed size array
+        # Initialize the fixed size array
+        self.data = [None] * (self.capacity)
         self.front = 0
         self.rear = 0
         self.size = 0  # Currently empty
@@ -45,9 +48,11 @@ class Queue:
         if self.full():
             raise IndexError("Queue is full")
         self.data[self.rear] = val
-        self.rear = (self.rear + 1) % self.capacity  # Circular Increment
+        # Circular Increment, keep it within array bounds
+        self.rear = (self.rear + 1) % self.capacity
         self.size += 1
-        print(f"Value {val} enqueued. Queue is {repr(self)}. Size is {self.size}")
+        print(f"Value {val} enqueued. Queue is {repr(self)}."
+              f"Size is {self.size}")
 
     def dequeue(self):
         """
@@ -63,21 +68,24 @@ class Queue:
         self.data[self.front] = None
         self.front = (self.front + 1) % self.capacity
         self.size -= 1
-        print(f"Value Dequeued is {val}. Queue is {repr(self)}. Size is {self.size}")
+        print(f"Value Dequeued is {val}. Queue is {repr(self)}."
+              f"Size is {self.size}")
         return val
 
     def empty(self):
         '''
         Returns True if Queue is empty, else returns False
-        They can only collide in a circular world when they are empty
+        They can only collide in a circular world
+        when they are empty
         '''
         return self.size == 0
 
     def full(self):
         '''
         Return True if the Queue is full, else returns False
-        Considers the buffer of 1 so that the front and rear do not collide
-        while enque. They should only collide when the queue is empty.
+        Considers the buffer of 1 so that the front and rear
+        do not collide while enque. They should only collide
+        when the queue is empty.
         '''
         return (self.rear + 1) % self.capacity == self.front
 
@@ -97,7 +105,7 @@ def test_queue():
     try:
         q.dequeue()
     except Exception as e:
-        print(f"Dequeue on empty queue. exception raised: {str(e)}")
+        print(f"Dequeue on empty queue. exception raised: {type(e)}:{str(e)}")
     q.enqueue(1)
     q.enqueue(2)
     q.enqueue(3)
