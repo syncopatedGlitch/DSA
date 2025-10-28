@@ -74,27 +74,122 @@ def substring_concat(s: str, words: List[str]) -> List[int]:
     return res
 
 
+def substring_concat_optimised(
+        s: str, words: List[str]
+        ) -> List[int]:
+    # Edge case: if s, words, or words[0] is empty,
+    # we can't find anything.
+    if not s or not words or not words[0]:
+        return []
+
+    word_len = len(words[0])
+    num_words = len(words)
+    window_len = word_len * num_words
+
+    # If the string is shorter than the total length
+    # of words, no match is possible.
+    if len(s) < window_len:
+        return []
+
+    # Create the target frequency map of words to find.
+    target_counts = Counter(words)
+    result_indices = []
+
+    # This outer loop iterates through each possible
+    # "reading frame".
+    # For word_len = 3, it will run for i=0,
+    # i=1, and i=2.
+    # This ensures we check for concatenations starting
+    # at any possible index.
+    for i in range(word_len):
+        # 'left' is the starting pointer of the
+        # current sliding window.
+        left = i
+        # 'words_found' counts how many valid words
+        # are in the current window.
+        words_found = 0
+        # 'window_counts' stores the frequency of words
+        # in the current window.
+        window_counts = Counter()
+
+        # The inner loop slides the window across the
+        # string, jumping by word_len.
+        # 'j' represents the start of the word being
+        # added to the window from the right.
+        for j in range(i, len(s) - word_len + 1, word_len):
+            # Get the new word entering the window from
+            # the right.
+            word = s[j:j + word_len]
+
+            # Case 1: The word is a valid word we are
+            # looking for.
+            if word in target_counts:
+                window_counts[word] += 1
+                words_found += 1
+
+                # Subcase 1.1: We have too many of this
+                # specific word.
+                # We must shrink the window from the left
+                # until the count is valid again.
+                while window_counts[word] > target_counts[word]:
+                    leftmost_word = s[left:left + word_len]
+                    window_counts[leftmost_word] -= 1
+                    words_found -= 1
+                    left += word_len
+
+                # Subcase 1.2: The window is full of the
+                # correct number of words.
+                if words_found == num_words:
+                    # We found a valid concatenation,
+                    # so add the starting index.
+                    result_indices.append(left)
+
+                    # To continue searching, slide the
+                    # window forward by one word.
+                    # Remove the leftmost word from the
+                    # window counts to make space.
+                    leftmost_word = s[left:left + word_len]
+                    window_counts[leftmost_word] -= 1
+                    words_found -= 1
+                    left += word_len
+
+            # Case 2: The word is not in our list of
+            # target words.
+            # This breaks any potential concatenation,
+            # so we must reset the window.
+            else:
+                window_counts.clear()
+                words_found = 0
+                # Move the window start to the position
+                # after this "imposter" word.
+                left = j + word_len
+
+    return result_indices
+
+
 def tests():
-    s = "barfoothefoobarman"
-    words = ["foo", "bar"]
-    res = substring_concat(s, words)
-    print(f"result for string '{s}' and words: {words} is {res}")
-    assert res == [0, 9]
-    s = "wordgoodgoodgoodbestword"
-    words = ["word", "good", "best", "word"]
-    res = substring_concat(s, words)
-    print(f"result for string '{s}' and words: {words} is {res}")
-    assert res == []
-    s = "barfoofoobarthefoobarman"
-    words = ["bar", "foo", "the"]
-    res = substring_concat(s, words)
-    print(f"result for string '{s}' and words: {words} is {res}")
-    assert res == [6, 9, 12]
-    s = "wordgoodgoodgoodbestword"
-    words = ["word", "good", "best", "good"]
-    res = substring_concat(s, words)
-    print(f"result for string '{s}' and words: {words} is {res}")
-    assert res == [8]
+    test_cases = [
+        ("barfoothefoobarman", ["foo", "bar"], [0, 9]),
+        ("wordgoodgoodgoodbestword", ["word", "good", "best", "word"], []),
+        ("barfoofoobarthefoobarman", ["bar", "foo", "the"], [6, 9, 12]),
+        ("wordgoodgoodgoodbestword", ["word", "good", "best", "good"], [8]),
+        # Edge case for string being the exact concatenation
+        ("foobar", ["foo", "bar"], [0])
+    ]
+
+    print("--- Testing substring_concat (Original) ---")
+    for i, (s, words, expected) in enumerate(test_cases):
+        res = substring_concat(s, words)
+        print(f"Test {i+1}: result for string '{s}' and",
+              f"words: {words} is {res}")
+        assert sorted(res) == sorted(expected)
+
+    print("\n--- Testing substring_concat_optimised ---")
+    for i, (s, words, expected) in enumerate(test_cases):
+        res = substring_concat_optimised(s, words)
+        print(f"Test {i+1}: result for string '{s}'",
+              f"and words: {words} is {res}")
+        assert sorted(res) == sorted(expected)
 
 
 tests()
