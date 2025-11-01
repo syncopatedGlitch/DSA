@@ -90,9 +90,9 @@ class Trie:
         for char in word:
             if char not in current_node.children:
                 current_node.children[char] = TrieNode()
-                current_node = current_node.children[char]
-            else:
-                current_node = current_node.children[char]
+            current_node = current_node.children[char]
+            # else:
+            #     current_node = current_node.children[char]
         # after the end of loop, mark the last word
         current_node.is_end_of_word = True
 
