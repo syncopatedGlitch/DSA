@@ -60,30 +60,32 @@ invalid paths early. We do this by combining two concepts:
 
 
 class TrieNode:
-    def __init__(self, ):
-        '''
+    def __init__(
+        self,
+    ):
+        """
         Initializes a TrieNode.
         A trie node is just a pointer to next word, it doesnt contain
         anything in itself, just pointer to its children
         self.children: A dictionary mapping a character to a child TrieNode.
         self.is_end_of_word: A boolean that is True if the path to this
         node represents a complete word.
-        '''
-        self.children: Dict[str: TrieNode] = {}
+        """
+        self.children: Dict[str:TrieNode] = {}
         self.is_end_of_word: bool = False
 
 
 class Trie:
     def __init__(self):
-        '''
+        """
         Initializes the Trie data structure
-        '''
+        """
         self.root = TrieNode()
 
     def insert(self, word: str):
-        '''
+        """
         Insert a word into the Trie data structure
-        '''
+        """
         current_node = self.root
         for char in word:
             if char not in current_node.children:
@@ -95,9 +97,9 @@ class Trie:
         current_node.is_end_of_word = True
 
     def search(self, word: str) -> bool:
-        '''
+        """
         search for a word in Trie Data structure
-        '''
+        """
         current = self.root
         for char in word:
             if char not in current.children:
@@ -126,12 +128,13 @@ class Trie:
         return True
 
 
-def dfs(current_word, trie_node, board, row, column,
-        found_words, visited=None):
-    '''
+def dfs(
+    current_word, trie_node, board, row, column, found_words, visited=None
+):
+    """
     perform a depth first search on the board,
     which is basically a graph
-    '''
+    """
     if not visited:
         visited = set()
     char = board[row][column]
@@ -145,8 +148,16 @@ def dfs(current_word, trie_node, board, row, column,
     if next_trie_node.is_end_of_word:
         found_words.add(current_word)
     visited.add((row, column))
-    directions = [(0, 1), (0, -1), (-1, 0), (1, 0),
-                  (-1, 1), (-1, -1), (1, -1), (1, 1)]
+    directions = [
+        (0, 1),
+        (0, -1),
+        (-1, 0),
+        (1, 0),
+        (-1, 1),
+        (-1, -1),
+        (1, -1),
+        (1, 1),
+    ]
     for row_add, column_add in directions:
         new_row = row + row_add
         new_column = column + column_add
@@ -155,10 +166,10 @@ def dfs(current_word, trie_node, board, row, column,
                 current_word=current_word,
                 trie_node=next_trie_node,
                 board=board,
-                row=row+row_add,
-                column=column+column_add,
+                row=new_row,
+                column=new_column,
                 found_words=found_words,
-                visited=visited
+                visited=visited,
             )
     visited.remove((row, column))
 
@@ -182,7 +193,7 @@ def find_words(board: List[List[str]], words: List[str]) -> Set[str]:
                 board=board,
                 row=i,
                 column=j,
-                found_words=found_words
+                found_words=found_words,
             )
     return found_words
 
@@ -191,11 +202,7 @@ def tests():
     """
     Contains test cases for the Boggle board implementation.
     """
-    board1 = [
-        ['C', 'A', 'R'],
-        ['T', 'D', 'T'],
-        ['S', 'E', 'F']
-    ]
+    board1 = [["C", "A", "R"], ["T", "D", "T"], ["S", "E", "F"]]
     dictionary1 = ["CAR", "CARD", "CAT", "ART"]
     found_words = find_words(board1, dictionary1)
     expected = {"CAR", "CARD", "CAT", "ART"}
@@ -203,10 +210,10 @@ def tests():
     assert found_words == expected
 
     board2 = [
-        ['O', 'A', 'A', 'N'],
-        ['E', 'T', 'A', 'E'],
-        ['I', 'H', 'K', 'R'],
-        ['I', 'F', 'L', 'V']
+        ["O", "A", "A", "N"],
+        ["E", "T", "A", "E"],
+        ["I", "H", "K", "R"],
+        ["I", "F", "L", "V"],
     ]
     dictionary2 = ["OATH", "PEA", "EAT", "RAIN"]
     found_words = find_words(board2, dictionary2)
