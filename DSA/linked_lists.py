@@ -25,6 +25,7 @@ Time Complexities:
 
 # Linked list implementation
 
+
 class Node:
     def __init__(self, val):
         self.val = val
@@ -43,8 +44,16 @@ class LinkedList:
             current = current.next
         return str(vals)
 
+    def return_list(self):
+        current = self.head
+        vals = []
+        while current:
+            vals.append(current.val)
+            current = current.next
+        return vals
+
     def push_back(self, val):
-        '''Add a new node at the end'''
+        """Add a new node at the end"""
         new_node = Node(val)
         # if the list is empty, point the head to new node
         if self.head is None:
@@ -60,7 +69,7 @@ class LinkedList:
             current.next = new_node
 
     def push_front(self, val):
-        '''Add a new node at the front'''
+        """Add a new node at the front"""
         new_node = Node(val)
         first = self.head
         self.head = new_node
@@ -82,7 +91,7 @@ class LinkedList:
             return False
 
     def value_at(self, index):
-        '''returns the value at the given index, starting from 0'''
+        """returns the value at the given index, starting from 0"""
         current = self.head
         count = 0
         while current:
@@ -92,7 +101,7 @@ class LinkedList:
             current = current.next
 
     def _node_at(self, index):
-        '''returns the node at a given index, starting from 0'''
+        """returns the node at a given index, starting from 0"""
         current = self.head
         count = 0
         while current:
@@ -102,14 +111,14 @@ class LinkedList:
             current = current.next
 
     def pop_front(self):
-        '''remove the front item and return its value'''
+        """remove the front item and return its value"""
         current = self.head
         next_node = current.next
         self.head = next_node
         return current.val
 
     def pop_back(self):
-        '''removes end item and returns its value'''
+        """removes end item and returns its value"""
         current = self.head
         # if empty, return None
         if current is None:
@@ -130,11 +139,11 @@ class LinkedList:
         return val  # return the value
 
     def front(self):
-        '''get the value of the front item'''
+        """get the value of the front item"""
         return self.head.val
 
     def back(self):
-        '''get the value from the end'''
+        """get the value from the end"""
         current = self.head
         while current.next:
             current = current.next
@@ -142,22 +151,22 @@ class LinkedList:
         return current.val
 
     def insert(self, index, val):
-        '''inserts the value at index, so current item at that index is pointed to by new item at index'''
+        """inserts the value at index, so current item at that index is pointed to by new item at index"""
         new_node = Node(val)
         if index == 0:
             self.push_front(val)
             return
-        node_before_index = self._node_at(index-1)
+        node_before_index = self._node_at(index - 1)
         node_at_index = node_before_index.next
         node_before_index.next = new_node
         new_node.next = node_at_index
 
     def erase(self, index):
-        '''removes node at given index'''
+        """removes node at given index"""
         if index == 0:
             self.pop_front()
             return
-        node_before_index = self._node_at(index-1)
+        node_before_index = self._node_at(index - 1)
         node_at_index = node_before_index.next
         if node_at_index.next is None:
             node_before_index.next = None
@@ -165,12 +174,12 @@ class LinkedList:
         node_before_index.next = node_at_index.next
 
     def reverse(self):
-        '''reverse the linked list'''
+        """reverse the linked list"""
         # TODO implement this.
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     llist = LinkedList()
     llist.push_back(1)
     llist.push_back(2)
@@ -182,9 +191,13 @@ if __name__ == '__main__':
     print(f"List Empty: {llist.is_empty()}")
     print(f"Valur at index 3 is {llist.value_at(index=3)}")
     print(f"list is {repr(llist)}")
-    print(f"popped the value from the front and returned value was {llist.pop_front()}.")
+    print(
+        f"popped the value from the front and returned value was {llist.pop_front()}."
+    )
     print(f"Now list is {repr(llist)}")
-    print(f"popped the value from the end and returned value was {llist.pop_back()}.")
+    print(
+        f"popped the value from the end and returned value was {llist.pop_back()}."
+    )
     print(f"Now list is {repr(llist)}")
     print(f"front value is {llist.front()}")
     print(f"last value is {llist.back()}")
