@@ -18,7 +18,6 @@ Example 2:
 
 Input: preorder = [-1], inorder = [-1]
 Output: [-1]
- 
 """
 
 
@@ -56,7 +55,9 @@ class Solution:
     def build_tree_optimised(
             self, inorder: List[int], preorder: List[int]
             ) -> Optional[TreeNode]:
-        self.inorder_map = {node: index for index, node in enumerate(inorder)}
+        self.inorder_map = {
+            node: index for index, node in enumerate(inorder)
+        }
         self.inorder = inorder
         self.preorder = preorder
         self.preorder_index = 0

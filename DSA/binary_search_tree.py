@@ -1,33 +1,45 @@
+from collections import deque
 """Binary Search Tree (BST) Implementation
 
-This module implements a Binary Search Tree, a hierarchical data structure that maintains
-sorted data and allows efficient searching, insertion, and deletion operations.
+This module implements a Binary Search Tree, a
+hierarchical data structure that maintains
+sorted data and allows efficient searching,
+insertion, and deletion operations.
 
 Binary Search Tree Properties:
 1. Each node has at most two children (left and right)
 2. For any node N:
-   - All values in the left subtree are less than N's value
-   - All values in the right subtree are greater than N's value
-3. Both left and right subtrees are also binary search trees (recursive property)
+   - All values in the left subtree are less
+     than N's value
+   - All values in the right subtree are greater
+     than N's value
+3. Both left and right subtrees are also binary search trees
+   (recursive property)
 
 Tree Traversal Methods:
-- Pre-order: Root → Left → Right (useful for copying/serializing tree)
-- In-order: Left → Root → Right (produces sorted sequence)
-- Post-order: Left → Right → Root (useful for deletion/cleanup)
+- Pre-order: Root → Left → Right (useful for
+  copying/serializing tree)
+- In-order: Left → Root → Right (produces
+  sorted sequence)
+- Post-order: Left → Right → Root (useful for
+  deletion/cleanup)
 - Level-order: Breadth-first traversal using queue
 
 Key Operations:
 - Insert: Add new nodes while maintaining BST property
 - Search: Find nodes efficiently using BST property
-- Delete: Remove nodes with three cases (leaf, one child, two children)
+- Delete: Remove nodes with three cases (leaf,
+  one child, two children)
 - Traversals: Multiple ways to visit all nodes
 - Min/Max: Find minimum/maximum values efficiently
 
 Time Complexities:
 - Average Case: O(log n) for search, insert, delete
-- Worst Case: O(n) when tree becomes skewed (like a linked list)
+- Worst Case: O(n) when tree becomes skewed
+  (like a linked list)
 - Best Case: O(log n) when tree is balanced
-- Space Complexity: O(n) for storage, O(h) for recursion where h is height
+- Space Complexity: O(n) for storage, O(h) for
+  recursion where h is height
 
 Implementation Features:
 - Parent pointers for efficient navigation
@@ -49,12 +61,13 @@ In-order: Left -> Root -> Right
 Post-order: Left -> Right -> Root
 
 '''
-from collections import deque
 
 
 class Node:
     ''' Represents the node of a binary search tree'''
-    def __init__(self, val, left=None, right=None, parent=None):
+    def __init__(
+            self, val, left=None, right=None, parent=None
+            ):
         self.left = left
         self.right = right
         self.parent = parent
@@ -83,7 +96,6 @@ class BinarySearchTree:
                 if current.left is None:
                     current.left = new_node
                     new_node.parent = current
-                    print(f"Added new value {val} to the left of existing value {current.val}")
                     break
                 current = current.left
             # if the value is greater, go right
@@ -92,25 +104,28 @@ class BinarySearchTree:
                 if current.right is None:
                     current.right = new_node
                     new_node.parent = current
-                    print(f"Added new value {val} to the right of existing value {current.val}")
                     break
                 current = current.right
             else:
                 # if the value is equal, do nothing
-                print(f"Value {val} already exists in the tree. Duplicates not allowed")
                 break
 
     def delete(self, val):
         '''
         Delete a node with given value from a binary tree
         Three types of cases to handle.
-        1. Delete a leaf node (easy, just delete it and cut the link with parent)
-        2. Delete a Node with only one child (also ok, just link the only child to node's parent)
-        3. Delete a Node with 2 children (complex). Approach is:
-            a. find the minimum in the node's right subtree, or inorder successor
-            (or max in the left subtree, or inorder predecessor)
+        1. Delete a leaf node (easy, just delete it and
+           cut the link with parent)
+        2. Delete a Node with only one child (also ok,
+           just link the only child to node's parent)
+        3. Delete a Node with 2 children (complex).
+           Approach is:
+            a. find the minimum in the node's right subtree,
+               or inorder successor (or max in the left
+               subtree, or inorder predecessor)
             b. Copy the min (or max) value found into the node.
-            c. Delete the duplicate from right subtree (or left subtree)
+            c. Delete the duplicate from right subtree
+               (or left subtree)
         '''
         present, node = self.is_in_tree(val)
         if not present:
@@ -145,29 +160,33 @@ class BinarySearchTree:
             print(f"Deleted node {val} with only one child")
         # case 3: node to delete has two children
         else:
-            # find the in order successor (or the min in the node's right subtree)
+            # find the in order successor (or the min in
+            # the node's right subtree)
             successor = node.right
             while successor.left:
                 successor = successor.left
             # copy the value of successor to the node
             successor_val = successor.val
             node.val = successor_val
-            # Delete the successor (which has at most one child - right child)
+            # Delete the successor (which has at most one child
+            # - right child)
             if successor.parent.left == successor:
-                successor.parent.left = successor.right  # successor.right could be None, but thats ok
+                # successor.right could be None, but thats ok
+                successor.parent.left = successor.right
             else:
                 successor.parent.right = successor.right
-            # update the parent pointer of successor.right if it exists
+            # update the parent pointer of successor.right if
+            # it exists
             if successor.right:
                 successor.right.parent = successor.parent
-            print(f"Deleted node {val} with two children, replaced with successor {successor_val}")
 
     def in_order_traversal(self):
         '''
         Type of DFS
-        perform in order traversal to display a sorted list of values from a binary tree.
-        Practical application: create a sorted list from a binary tree as
-        an input for binary search algorithm.
+        perform in order traversal to display a sorted
+        list of values from a binary tree.
+        Practical application: create a sorted list from
+        a binary tree as an input for binary search algorithm.
         In-order: Left -> Root -> Right
         '''
         result = []
@@ -190,9 +209,12 @@ class BinarySearchTree:
     def pre_order_traversal(self):
         '''
         Type of DFS
-        perform pre order traversal to display a list of values from Binary tree
-        Practical application: Search for a largest file in a directory.
-        We want to process/examine each file as soon as we encounter it,
+        perform pre order traversal to display a list
+        of values from Binary tree
+        Practical application: Search for a largest
+        file in a directory.
+        We want to process/examine each file as soon
+        as we encounter it,
         then continue searching in subdirectories.
 
         Traversal Flow:
@@ -221,9 +243,13 @@ class BinarySearchTree:
     def post_order_traversal(self):
         '''
         Type of DFS
-        Perform post order traversal to display a list of values from a binary tree.
-        Practical application: Calculate the size of a given directory.
-        We need to calculate children sizes first before we can determine the parent directory's total size.
+        Perform post order traversal to display a list
+        of values from a binary tree.
+        Practical application: Calculate the size of
+        a given directory.
+        We need to calculate children sizes first
+        before we can determine the parent directory's
+        total size.
         Traversal Flow:
         Directory A
         ├── File1.txt (5KB)
@@ -261,13 +287,19 @@ class BinarySearchTree:
     def level_order_traversal(self):
         '''
         Type of BFS
-        perform a level order traversal to display a binary tree level by level.
-        Practical applications: #### 1. Social Media - Finding Connections
-        BFS explores connections level by level, starting with direct connections (1st degree),
-        then their connections (2nd degree), and so on. When LinkedIn shows "You're connected
-        to John through 3 mutual connections," it's using BFS to find the shortest chain. The
-        algorithm maintains a queue of people to explore and tracks the path
-        taken to reach each person, guaranteeing the first path found is the shortest.
+        perform a level order traversal to display a
+        binary tree level by level.
+        Practical applications: ####
+        1. Social Media - Finding Connections
+        BFS explores connections level by level, starting
+        with direct connections (1st degree),
+        then their connections (2nd degree), and so on.
+        When LinkedIn shows "You're connected
+        to John through 3 mutual connections," it's using
+        BFS to find the shortest chain. The
+        algorithm maintains a queue of people to explore
+        and tracks the path taken to reach each person,
+        guaranteeing the first path found is the shortest.
         '''
 
         if self.root is None:
@@ -289,14 +321,16 @@ class BinarySearchTree:
         '''
         perform inorder traversal using explicit stack
         In-order: Left -> Root -> Right
-        We must visit the left subtree completely before processing the root, but we need to
+        We must visit the left subtree completely before
+        processing the root, but we need to
         remember the root to come back to it later.
         '''
         if not self.root:
             print("Tree is empty")
             return
-
-        stack = []  # can use array here as we need a stack (LIFO) and append and pop are O(1) operations
+        # can use array here as we need a stack (LIFO)
+        # and append and pop are O(1) operations
+        stack = []
         result = []
         current = self.root
         while stack or current:
@@ -304,7 +338,8 @@ class BinarySearchTree:
             while current:
                 stack.append(current)
                 current = current.left
-            # if no more left children, pop the item from stack and process it
+            # if no more left children, pop the item
+            # from stack and process it
             last = stack.pop()
             result.append(last.val)
             # move to the right subtree
@@ -313,9 +348,11 @@ class BinarySearchTree:
 
     def pre_order_trav_iterative(self):
         '''
-        Perform in order traversal with explicit stack management
+        Perform in order traversal with explicit
+        stack management
         Pre-order: Root -> Left -> Right
-        We can process a node immediately when we encounter it, then explore its children
+        We can process a node immediately when we
+        encounter it, then explore its children
         '''
         if not self.root:
             print("Tree is empty")
@@ -326,7 +363,8 @@ class BinarySearchTree:
             # Stack is LIFO. Process the last entry in the stack
             current = stack.pop()
             result.append(current.val)
-            # Add right node first and then left, so that left gets processed first.
+            # Add right node first and then left,
+            # so that left gets processed first.
             if current.right:
                 stack.append(current.right)
             if current.left:
@@ -358,7 +396,8 @@ class BinarySearchTree:
                 if peek_node.right and last_processed != peek_node.right:
                     current = peek_node.right
                 else:
-                    # right subtree is visited, left has already been visited in the first "if" block.
+                    # right subtree is visited, left has already
+                    # been visited in the first "if" block.
                     # so process the node
                     result.append(peek_node.val)
                     last_processed = stack.pop()
@@ -426,10 +465,12 @@ class BinarySearchTree:
                 # if value is greater, go right
                 current = current.right
 
-        # only continue if node containing the required value is found, else break
+        # only continue if node containing the required
+        # value is found, else break
         if not current:
             print("Given value not present in tree.")
-        # if node has a right subtree, successor would be the minimum value in the right subtree
+        # if node has a right subtree, successor would
+        # be the minimum value in the right subtree
         if current.right:
             current = current.right
             # go left to find the leftmost node
@@ -438,8 +479,11 @@ class BinarySearchTree:
             return current.val
         else:
             # if node has no right subtree:
-            # The successor is the lowest ancestor for which the current node is in the left subtree
-            # If no such ancestor exists, then this node is the maximum value in the tree and has no successor
+            # The successor is the lowest ancestor for which
+            # the current node is in the left subtree
+            # If no such ancestor exists, then this node
+            # is the maximum value in the tree and has
+            # no successor
             while current:
                 if current.parent and current.parent.left == current:
                     return current.parent.val
@@ -449,8 +493,10 @@ class BinarySearchTree:
 
     def get_height_recursively(self, val):
         '''
-        Get the height of the node containing the given val in the binary tree using recursion.
-        The height of a node is max(height of left subtree, height of right subtree) + 1
+        Get the height of the node containing the given val
+        in the binary tree using recursion.
+        The height of a node is max(height of left subtree,
+        height of right subtree) + 1
         '''
         present, node = self.is_in_tree(val)
         if present:
@@ -536,12 +582,14 @@ def tests():
     vals = [4, 7, 10, 14, 20, 25, 50, 56, 60, 63, 72]
     for val in vals:
         print(f"Successor of {val} in the tree is {tree.get_successor(val)}")
-    print(f"Height of the tree using recursion is {tree.get_height_recursively(50)}")
+    print("Height of the tree using recursion",
+          f"is {tree.get_height_recursively(50)}")
     print(f"Height of the tree using BFS is {tree.get_height_bfs(50)}")
     tree.delete(4)
     tree.delete(56)
     tree.delete(10)
-    print(f"IN ORDER TRAVERSAL AFTER DELETIONS: {tree.in_order_trav_iterative()}")
+    print("IN ORDER TRAVERSAL AFTER DELETIONS:",
+          f"{tree.in_order_trav_iterative()}")
     print(f"Is valid Binary search tree: {is_binary_search_tree(tree.root)}")
     # create an invalid binary tree
     root = Node(100)
