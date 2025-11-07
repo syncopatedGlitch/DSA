@@ -152,7 +152,7 @@ class BinarySearchTree:
                     node.parent.left = child
                 else:
                     node.parent.right = child
-                    child.parent = node.parent
+                child.parent = node.parent
             else:
                 # deleting root node with only one child.
                 self.root = child
