@@ -122,8 +122,8 @@ class Solution:
             for ra, ca in directions:
                 new_row = row + ra
                 new_column = column + ca
-                if new_row < self.rows\
-                    and new_column < self.columns\
+                if 0 <= new_row < self.rows\
+                    and 0 <= new_column < self.columns\
                         and self.grid[new_row][new_column] == "1":
                     queue.append((new_row, new_column))
                     self.grid[new_row][new_column] = "0"
@@ -151,6 +151,11 @@ def tests():
         ["0", "0", "1", "0", "0"],
         ["0", "0", "0", "1", "1"]
     ]
+    assert sol.numIslands(grid2) == 3
+    print("Test Case 2 Passed")
+
+    # Example 3
+    grid2 = [["1", "0", "1", "1", "0", "1", "1"]]
     assert sol.numIslands(grid2) == 3
     print("Test Case 2 Passed")
 
