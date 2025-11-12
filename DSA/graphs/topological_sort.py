@@ -1,5 +1,5 @@
 from collections import deque
-
+from typing import Optional
 '''
 1. The Intuition
 
@@ -89,7 +89,7 @@ def dfs(graph, node, visiting, visited, result, cycle):
     return (result, cycle)
 
 
-def topological_sort_dfs(graph):
+def topological_sort_dfs(graph) -> Optional[list]:
     if not graph:
         print("EMPTY GRAPH")
         return []
@@ -117,11 +117,10 @@ def indegree_count(graph) -> dict:
     for node in graph:
         for neighbour in graph[node]:
             indegree_dict[neighbour] += 1
-    # indegree_dict = {node: len(graph[node]) for node in graph}
     return indegree_dict
 
 
-def topological_sort_kahn(graph):
+def topological_sort_kahn(graph) -> Optional[list}:
     if not graph:
         return []
     indegree_dict = indegree_count(graph)
