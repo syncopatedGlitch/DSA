@@ -57,6 +57,52 @@ invalid paths early. We do this by combining two concepts:
    after exploring all paths from a tile, we un-mark it as visited, so it
    can be used in completely different words that might start elsewhere.
 """
+'''
+OPTIMIZATIONS
+Pruning the Trie (The Biggest Performance Gain)
+
+Think of the Trie as a "to-do list" of words you still need to find.
+Once you find a word, you should check it off your list so you don't
+look for it again.
+
+By removing the word from the Trie, the algorithm ensures that each
+word in the input list is found at most once. If the search path for
+"oath" is explored again, the algorithm will no longer see it as a
+valid word ending, so it won't try to add it to the results.
+
+Even better, the trim_tree function is recursive. After removing the
+"end" marker for a word, it cleans up the path, deleting any nodes
+that are no longer part of any other word. This prunes entire branches
+from the search space, making all subsequent DFS calls faster.
+
+Modify the dfs logic:
+
+1. Find a word: When your DFS lands on a node where is_end_of_word
+is True, you've found
+    a word.
+    * Add the word to your results.
+    * Crucially, immediately mark it as found by setting
+      `node.is_end_of_word = False`. This prevents it from ever being
+      found again.
+
+2. Backtrack and Prune: The DFS will continue exploring deeper for
+   longer words (e.g., finding "oathkeeper" after "oath"). After it
+   has explored all paths from a given (row, column) and its
+   corresponding trie_node, it backtracks. This is the moment to
+   clean up.
+   * After the loop that explores the neighbors of the current cell
+     returns, check the next_node that you descended into.
+   * If next_node.children is now empty, it means that node is a
+     "leaf" or a dead end. It serves no purpose anymore.
+   * Therefore, you can safely delete it from its parent. In your
+     dfs code, this would look like: del trie_node.children[char].
+
+This creates a chain reaction. When your DFS backtracks from
+'h' to 't' in "oath", it sees that the 'h' node is now a leaf
+(since we found "oath" and there are no longer words like "oaths")
+and deletes it. Then, when it backtracks from 't' to 'a', it might
+see that 't' is now a leaf and delete it, and so on.
+'''
 
 
 class TrieNode:
@@ -147,6 +193,8 @@ def dfs(
         next_trie_node = trie_node.children[char]
     if next_trie_node.is_end_of_word:
         found_words.add(current_word)
+        # 1. Mark as found to prevent re-adding
+        next_trie_node.is_end_of_word = False
     visited.add((row, column))
     directions = [
         (0, 1),
@@ -171,6 +219,9 @@ def dfs(
                 found_words=found_words,
                 visited=visited,
             )
+
+    if not next_trie_node.children:
+        del trie_node.children[char]
     visited.remove((row, column))
 
 
