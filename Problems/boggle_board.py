@@ -219,7 +219,10 @@ def dfs(
                 found_words=found_words,
                 visited=visited,
             )
-
+    # prune the trie while backtracking
+    # removing the already found words so that
+    # next dfs recursion would not go down that path
+    # saving unnecessary traversals.
     if not next_trie_node.children:
         del trie_node.children[char]
     visited.remove((row, column))
