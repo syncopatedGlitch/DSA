@@ -151,6 +151,9 @@ class Solution:
             target: int
     ) -> List[List[int]]:
         result = []
+        # sort the array so you can stop when you
+        # reach the element that is greater than the
+        # target sum and break out of recursion loop
         candidates = sorted(candidates)
 
         def backtracking(current_combo, remaining_target, start_index):
@@ -161,9 +164,14 @@ class Solution:
             for i in range(start_index, len(candidates)):
                 if candidates[i] > remaining_target:
                     continue
+                # key optimization. See comment in the
+                # main function
                 if candidates[i] > target:
                     break
                 current_combo.append(candidates[i])
+                # pass i into the backtracking method
+                # that allows to use same number multiple
+                # times
                 backtracking(
                     current_combo,
                     remaining_target - candidates[i],
