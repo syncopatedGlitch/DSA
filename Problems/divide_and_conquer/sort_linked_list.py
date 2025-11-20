@@ -191,7 +191,8 @@ def create_linked_list(values: List[int]) -> Optional[ListNode]:
 
 
 def linked_list_to_list(head: Optional[ListNode]) -> List[int]:
-    """Helper function to convert a linked list back to a list for assertion."""
+    """Helper function to convert a linked list back to a list
+    for assertion."""
     values = []
     current = head
     while current:
