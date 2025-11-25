@@ -117,6 +117,9 @@ def find_median_sorted_array_optimised(arr1, arr2) -> float:
         arr2, arr1 = arr1, arr2
 
     m, n = len(arr1), len(arr2)
+    # The search space for the partition is the
+    # inclusive range [0, m].
+    # `high` is set to `m`, not `m-1`.
     low, high = 0, m
 
     while low <= high:
