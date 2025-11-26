@@ -25,7 +25,7 @@ Output: [[1,5],[6,9]]
 
 Example 2:
 
-Input: intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]],
+Input: intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]]
 newInterval = [4,8]
 Output: [[1,2],[3,10],[12,16]]
 Explanation: Because the new interval [4,8] overlaps
@@ -76,5 +76,10 @@ def tests():
     print(f"result for {inte} and new interval", f"{new_int} is {r}")
     assert r == [[1, 2], [3, 10], [12, 16]]
 
+    interval3 = [[1, 2], [3, 8], [9, 10], [11, 12]]
+    new_interval3 = [4, 8]
+    result = insert_interval(interval3, new_interval3)
+    print(f"result for {interval3} and new interval", f"{new_interval3} is {result}")
+    assert result == [[1, 2], [3, 8], [9, 10], [11, 12]]
 
 tests()
