@@ -162,12 +162,12 @@ class Solution:
                 result.append(list(current_combo))
                 return
             for i in range(start_index, len(candidates)):
-                if candidates[i] > remaining_target:
-                    continue
+                if candidates[i] > remaining_target or candidates[i] > target:
+                    break
                 # key optimization. See comment in the
                 # main function
-                if candidates[i] > target:
-                    break
+                # if candidates[i] > target:
+                #     break
                 current_combo.append(candidates[i])
                 # pass i into the backtracking method
                 # that allows to use same number multiple
