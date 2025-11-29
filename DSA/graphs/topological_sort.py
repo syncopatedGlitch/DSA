@@ -120,7 +120,7 @@ def indegree_count(graph) -> dict:
     return indegree_dict
 
 
-def topological_sort_kahn(graph) -> Optional[list}:
+def topological_sort_kahn(graph) -> Optional[list]:
     if not graph:
         return []
     indegree_dict = indegree_count(graph)
