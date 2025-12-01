@@ -1,3 +1,4 @@
+import math
 '''
 Smallest Substring Containing All Patterns
 Given a string S and an array of patterns, find the smallest substring window [l, r] such that each pattern appears at least once within S[l..r]. Return the pair of indices or [-1, -1] if no such window exists.
@@ -87,6 +88,7 @@ After finding all occurrences, you have something like:
    again. Repeat until done.
 '''
 
+
 def findSmallestSubstringWindow(patterns, S):
     # find all individual occurence of each pattern first
     # store tuple containing (start, end, pattern_idx)
@@ -101,13 +103,12 @@ def findSmallestSubstringWindow(patterns, S):
             matches.append((start, end, pattern))
     # sort all occurence intervals by start index
     matches.sort(key=lambda x: x[0])
-    sys.stderr.write(f"sorted matches are {matches}")
     # create a frequency map for all patterns so you know who is covered in the window
     # and who is left out.
     target_counts = dict(Counter(patterns))
-    sys.stderr.write(f"target counts are {target_counts}")
     result = find_smallest_substring(matches, target_counts)
     return result
+
 
 def find_smallest_substring(matches, target_counts):
     window_counts = {}
@@ -144,7 +145,7 @@ def find_smallest_substring(matches, target_counts):
                     formed -= 1
                 window_counts[leftmost_pattern] -= 1    
     return result_window
-       
+
 
 def find_all_occurences(pattern, s: str):
     i = 0
