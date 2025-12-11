@@ -109,11 +109,12 @@ def min_time_to_room(move_time: list) -> int:
     if not move_time or not move_time[0]:
         return 0
     n, m = len(move_time), len(move_time[0])
-    # (row, col, moves_parity) -> min_time
-    # moves_parity = 0 if next move is 1s, 1 if next move is 2s
+    # State: (row, col, moves_made_parity) -> min_time
+    # moves_made_parity = 0 for even moves, 1 for odd moves
     distances = {}
     # Priority queue: (time, row, col, moves_made)
     pq = [(0, 0, 0, 0)]
+    # The key for distances must include the move parity
     distances[(0, 0, 0)] = 0
 
     while pq:
@@ -121,6 +122,7 @@ def min_time_to_room(move_time: list) -> int:
         # if we have found the result, return immediately
         if row == n - 1 and column == m - 1:
             return time
+        # Check against the time for this specific state (including move parity)
         if time > distances.get((row, column, moves % 2), float('inf')):
             continue
         # determine the move cost of the next move
@@ -135,15 +137,15 @@ def min_time_to_room(move_time: list) -> int:
                 # is more than currently paosed time
                 start_move_time = max(time, move_time[next_row][next_column])
                 total_time = start_move_time + move_cost
-                new_moves = moves + 1
-                new_parity = new_moves % 2
+                new_moves_count = moves + 1
+                new_moves_parity = new_moves_count % 2
                 if total_time < distances.get(
-                    (next_row, next_column, new_parity), float('inf')
+                    (next_row, next_column, new_moves_parity), float('inf')
                 ):
-                    distances[(next_row, next_column, new_parity)] = total_time
+                    distances[(next_row, next_column, new_moves_parity)] = total_time
                     heapq.heappush(
                         pq,
-                        (total_time, next_row, next_column, new_moves)
+                        (total_time, next_row, next_column, new_moves_count)
                     )
     # Should not be reached if a path exists
     return -1

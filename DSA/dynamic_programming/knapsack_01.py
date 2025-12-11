@@ -145,6 +145,34 @@ a capacity of 5, and the formula simply leverages the fact that the
 answers for a capacity of 5 and a capacity of 3 (for the previous items)
 have already been optimally solved and are waiting for you in the table.
 '''
+'''
+why are we checking weights[i-1] <= capacity. Should we not consider
+weights[i-1] <= capacity - weights[i-2]? capacity - weights[i-2] would
+give us the remaining capacity at that point, isnt it?
+
+Your thinking (capacity - weights[i-2]) comes from a sequential,
+"one-pass" approach: "I've made a decision about the previous item,
+so my capacity has shrunk, and now I need to check the current item
+against the remaining capacity."
+
+This is a perfectly logical way to think, but it's not how this specific
+DP solution is structured. Let's clarify the difference.
+
+The DP Mindset: Solving Many Hypothetical Problems
+The DP table, dp[i][c], is not tracking the state of a single knapsack
+being filled over time. Instead, dp[i][c] stores the answer to a very
+specific, self-contained, hypothetical question:
+
+"If you were given a fresh, empty knapsack of capacity c, and were only
+allowed to use items from the set {item 1, item 2, ..., item i}, what
+is the absolute maximum value you could possibly get?"
+
+Notice that for every i and c, we are considering a fresh knapsack with
+that full capacity c. We are not carrying over a "remaining capacity"
+from a previous calculation. We are building a comprehensive lookup
+table of optimal solutions for all possible item subsets and all
+possible capacities.
+'''
 
 
 def solve_knapsack(
